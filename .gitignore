@@ -1,0 +1,19 @@
+# Base ignores:
+# Silly OS X trash files.
+.DS_Store
+
+# vim backup files.
+.*.swp
+
+# other editor backup files.
+*~
+
+# Compiled python modules.
+*.pyc
+
+# Egg metadata, regenerated from source files by setuptools.
+/manhattan.egg-info
+
+# Tests coverage temp files.
+.coverage
+/cover
