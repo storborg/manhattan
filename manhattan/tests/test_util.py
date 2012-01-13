@@ -1,3 +1,5 @@
+import math
+from collections import defaultdict
 from unittest import TestCase
 
 from manhattan import util
@@ -5,16 +7,66 @@ from manhattan import util
 
 class TestUtil(TestCase):
 
+    def assertRandomish(self, s, bits=4):
+        # Calculate entropy.
+        counts = defaultdict(int)
+        for char in s:
+            counts[char] += 1
+
+        n = float(len(s))
+        entropy = sum((c / n) * math.log(n / c) / math.log(2)
+                      for c in counts.values())
+        self.assertLess(bits - entropy, .01)
+
+    def assertRoughly(self, a, b, f=0.5):
+        bot = b - (b * f)
+        top = b + (b * f)
+        self.assertLessEqual(bot, a)
+        self.assertLessEqual(a, top)
+
     def test_nonce(self):
-        calls = [util.nonce() for x in xrange(10)]
-        self.assertEqual(len(set(calls)), len(calls))
-        self.assertGreater(len(calls[0]), 8)
+        n1 = util.nonce()
+        n2 = util.nonce()
+        self.assertNotEqual(n1, n2)
 
-    def test_nonrandom_choice(self):
-        pass
+        s = ''.join(util.nonce() for i in range(100))
+        self.assertRandomish(s)
 
-    def test_nonrandom(self):
-        pass
+    def test_choose_population_bool(self):
+        a = 0
+        for ii in range(200):
+            if util.choose_population(util.nonce()):
+                a += 1
+        # Make sure it's relatively uniform...
+        self.assertRoughly(a, 100)
 
-    def test_choose_population(self):
-        pass
+    def test_chose_population_bad_value(self):
+        with self.assertRaises(ValueError):
+            util.choose_population(util.nonce(), 123)
+
+    def test_choose_population_zero_mass(self):
+        with self.assertRaises(ValueError):
+            util.choose_population(util.nonce(), {'foo': 0})
+
+    def test_choose_population_list(self):
+        counts = defaultdict(int)
+        for ii in range(300):
+            choice = util.choose_population(util.nonce(),
+                                            ['foo', 'bar', 'baz'])
+            counts[choice] += 1
+        self.assertRoughly(counts['foo'], 100)
+        self.assertRoughly(counts['bar'], 100)
+        self.assertRoughly(counts['baz'], 100)
+
+    def test_choose_population_weighted(self):
+        counts = defaultdict(int)
+        for ii in range(300):
+            choice = util.choose_population(util.nonce(), {'foo': 0.1,
+                                                           'quux': 0,
+                                                           'bar': 0.1,
+                                                           'baz': 0.8})
+            counts[choice] += 1
+        self.assertRoughly(counts['foo'], 30)
+        self.assertRoughly(counts['bar'], 30)
+        self.assertRoughly(counts['baz'], 240)
+        self.assertEqual(counts['quux'], 0)
