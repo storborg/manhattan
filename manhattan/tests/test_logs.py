@@ -6,26 +6,25 @@ from webob import Request
 from manhattan.visitor import Visitor
 from manhattan.worker import Worker
 from manhattan.backends.memory import MemoryBackend
+
 from manhattan.log.memory import MemoryLog
 from manhattan.log.gz import GZEventLog
 
 from . import data
 
 
-class TestVisitor(TestCase):
+class TestLogs(TestCase):
 
-    def setUp(self):
-        tf = NamedTemporaryFile()
-        self.log = GZEventLog(tf.name)
-        self.backend = MemoryBackend()
-        self.visitors = {}
+    def _run_clickstream(self, log):
+        backend = MemoryBackend()
+
+        visitors = {}
         for vid in ('a', 'b', 'c'):
-            self.visitors[vid] = Visitor(vid, self.log)
+            visitors[vid] = Visitor(vid, log)
 
-    def test_clickstream(self):
         for action in data.test_clickstream:
             cmd = action[0]
-            v = self.visitors[action[1]]
+            v = visitors[action[1]]
             args = action[2:]
 
             if cmd == 'page':
@@ -36,9 +35,17 @@ class TestVisitor(TestCase):
             elif cmd == 'goal':
                 v.goal(args[0])
 
-        worker = Worker(self.log, self.backend)
+        worker = Worker(log, backend)
         worker.run()
 
-        self.assertEqual(self.backend.count('add to cart'), 2)
-        self.assertEqual(self.backend.count('began checkout'), 1)
-        self.assertEqual(self.backend.count('viewed page'), 3)
+        self.assertEqual(backend.count('add to cart'), 2)
+        self.assertEqual(backend.count('began checkout'), 1)
+        self.assertEqual(backend.count('viewed page'), 3)
+
+    def test_memory_log(self):
+        log = MemoryLog()
+        self._run_clickstream(MemoryLog())
+
+    def test_gz_log(self):
+        log = GZEventLog('/tmp/manhattan-test-log')
+        self._run_clickstream(log)

@@ -21,7 +21,7 @@ class Visitor(object):
         self.log.write(['pixel', self.timestamp(), self.id])
 
     def goal(self, name, value=None):
-        self.log.write(['goal', self.timestamp(), self.id, name, value])
+        self.log.write(['goal', self.timestamp(), self.id, name, str(value)])
 
     def split(self, test_name, populations=None):
         selected = choose_population(self.id + test_name, populations)
