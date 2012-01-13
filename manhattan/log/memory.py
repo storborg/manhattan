@@ -22,3 +22,7 @@ class MemoryLog(object):
         for record in to_process:
             log.info('Playing record: %r', record)
             yield record
+
+    def purge(self):
+        log.info('Purging log.')
+        self.q = deque()

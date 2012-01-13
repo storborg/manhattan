@@ -3,6 +3,17 @@ import hashlib
 import bisect
 
 
+transparent_pixel = (
+    'GIF89a'
+    '\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04'
+    '\x00\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02'
+    '\x02D\x01\x00;')
+
+
+def pixel_tag(path):
+    return '<img src="%s" alt="" />' % path
+
+
 def nonce():
     """
     Return a random nonce.
