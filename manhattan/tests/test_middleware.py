@@ -1,10 +1,12 @@
 from unittest import TestCase
+from tempfile import NamedTemporaryFile
 
 from webob import Request, Response
 from webtest import TestApp
 
 from manhattan.middleware import ManhattanMiddleware
 from manhattan.storage import FakeBackend
+from manhattan.log import EventLog
 
 
 class SampleApp(object):
@@ -17,11 +19,13 @@ class SampleApp(object):
         return resp(environ, start_response)
 
 
-backend = FakeBackend()
+tf = NamedTemporaryFile()
+log = EventLog(tf.name)
 
 app = SampleApp()
-app = ManhattanMiddleware(app, backend)
+app = ManhattanMiddleware(app, log)
 app = TestApp(app)
+
 
 class TestMiddleware(TestCase):
 

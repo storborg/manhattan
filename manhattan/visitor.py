@@ -1,30 +1,25 @@
-import logging
-
 from .util import choose_population
-
-log = logging.getLogger(__name__)
+from .log import EventLog
 
 
 class Visitor(object):
     """
     A handle to perform operations on the given visitor session.
     """
-
-    def __init__(self, id, backend):
+    def __init__(self, id, log):
         self.id = id
-        self.backend = backend
+        self.log = log
 
-    def pageview(self, request):
-        log.debug('pageview: %s - %s', self.id, request.url)
+    def page(self, request):
+        self.log.write(['page', self.id, request.url])
 
     def pixel(self):
-        log.debug('pixel: %s', self.id)
+        self.log.write(['pixel', self.id])
 
-    def goal(self, name):
-        log.debug('goal: %s - %s', self.id, name)
+    def goal(self, name, value=None):
+        self.log.write(['goal', self.id, name, value])
 
     def split(self, test_name, populations=None):
         selected = choose_population(self.id + test_name, populations)
-        log.debug('split: %s - %s -> %s', self.id,
-                  test_name, selected)
+        self.log.write(['split', self.id, test_name, selected])
         return selected

@@ -12,10 +12,10 @@ from .util import nonce
 
 class ManhattanMiddleware(object):
 
-    def __init__(self, app, backend, secret_key='blah', cookie_name='vis'):
+    def __init__(self, app, log, secret_key='blah', cookie_name='vis'):
         self.app = app
         self.cookie_name = cookie_name
-        self.backend = backend
+        self.log = log
         self.signer = Signer(secret_key)
 
     def __call__(self, environ, start_response):
@@ -27,9 +27,9 @@ class ManhattanMiddleware(object):
             vid = nonce()
             fresh = True
 
-        req.environ['manhattan.visitor'] = visitor = Visitor(vid, self.backend)
+        req.environ['manhattan.visitor'] = visitor = Visitor(vid, self.log)
 
-        visitor.pageview(req)
+        visitor.page(req)
         resp = req.get_response(self.app)
 
         if fresh:
