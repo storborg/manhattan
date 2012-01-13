@@ -11,6 +11,9 @@ setup(name="manhattan",
       keywords='',
       author='Scott Torborg',
       author_email='scott@cartlogic.com',
+      install_requires=[
+          'gzlog'
+      ],
       license='PRIVATE',
       packages=['manhattan'],
       test_suite='nose.collector',
