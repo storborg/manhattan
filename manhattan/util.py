@@ -27,16 +27,14 @@ def nonrandom_choice(s, seq):
     Pick an element from ``seq`` according to the value of string ``s``.
     Guaranteed to be deterministic, tries to be uniform.
     """
-    s = hashlib.md5(s).hexdigest()
-    return seq[int(s, 16) % len(seq)]
+    return random.Random(s).choice(seq)
 
 
 def nonrandom(s, n):
     """
     Return a deterministic but pseudo-random number between 0 and ``n``.
     """
-    s = hashlib.md5(s).hexdigest()
-    return int(s, 16) % n
+    return random.Random(s).random() * n
 
 
 def choose_population(s, populations=None):
