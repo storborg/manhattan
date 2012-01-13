@@ -1,3 +1,4 @@
+import os
 import random
 import hashlib
 import bisect
@@ -16,10 +17,9 @@ def pixel_tag(path):
 
 def nonce():
     """
-    Return a random nonce.
+    Return a random nonce, 160 bits long as a hex string.
     """
-    r = random.random()
-    return hashlib.sha1('%.66f' % r).hexdigest()
+    return os.urandom(20).encode('hex')
 
 
 def nonrandom_choice(s, seq):
