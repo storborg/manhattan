@@ -35,6 +35,8 @@ class TestVisitor(TestCase):
                 v.pixel()
             elif cmd == 'goal':
                 v.goal(args[0])
+            elif cmd == 'split':
+                v.split(args[0])
 
         worker = Worker(self.log, self.backend)
         worker.run()

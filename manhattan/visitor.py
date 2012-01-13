@@ -101,5 +101,5 @@ class Visitor(object):
         log.debug('split: %s %s', self.id, test_name)
         selected = choose_population(self.id + test_name, populations)
         self.log.write(['split', str(self.timestamp()), self.id, test_name,
-                        selected])
+                        str(selected)])
         return selected
