@@ -37,49 +37,8 @@ Some queries we want to handle...
 
 Stuff should be denormalized to handle these exact queries!
 """
-import pycassa
-
 from manhattan.backends.base import Backend
 
 
 class CassandraBackend(Backend):
-
-    def __init__(self, keyspace):
-        self.pool = pycassa.ConnectionPool(keyspace)
-
-    def record_pageview(self, request):
-        raise NotImplementedError
-
-    def record_pixel(self):
-        raise NotImplementedError
-
-    def record_goal(self, name):
-        raise NotImplementedError
-
-    def define_intersection(self, a, b, invert_a=False, invert_b=False):
-        raise NotImplementedError
-
-    def count(self, target, variant=None, start=None, end=None):
-        """
-        Return a count of the number of conversions on a given target.
-
-        :param target:
-          Unicode string, filters to sessions which have converted on the given
-          target.
-
-        :param variant:
-          Variant object, filters to sessions which belong to a given variant.
-
-        :param start:
-          Datetime, filters to conversions after this time.
-
-        :param end:
-          Datetime, filters to conversions before this time.
-        """
-        raise NotImplementedError
-
-    def get_sessions(self, target=None, variant=None, start=None, end=None):
-        """
-        Return a list of session ids which satisfy the given conditions.
-        """
-        raise NotImplementedError
+    pass

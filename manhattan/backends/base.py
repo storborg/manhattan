@@ -1,13 +1,15 @@
 class Backend(object):
+    """
+    Manhattan backend superclass.
 
-    def record_page(self, *args, **kwargs):
-        raise NotImplementedError
+    A subclass should implement at least the following methods:
 
-    def record_pixel(self, *args, **kwargs):
-        raise NotImplementedError
+        record_page
 
-    def record_goal(self, *args, **kwargs):
-        raise NotImplementedError
+        record_pixel
+        
+        record_goal
 
-    def record_split(self, *args, **kwargs):
-        raise NotImplementedError
+        record_split
+    """
+    pass
