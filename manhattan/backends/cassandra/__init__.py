@@ -37,8 +37,15 @@ Some queries we want to handle...
 
 Stuff should be denormalized to handle these exact queries!
 """
+import pycassa
 
-class CassandraBackend(object):
+from manhattan.backends.base import Backend
+
+
+class CassandraBackend(Backend):
+
+    def __init__(self, keyspace):
+        self.pool = pycassa.ConnectionPool(keyspace)
 
     def record_pageview(self, request):
         raise NotImplementedError
