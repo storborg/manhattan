@@ -16,8 +16,6 @@ from . import data
 class TestLogs(TestCase):
 
     def _run_clickstream(self, log):
-        backend = MemoryBackend()
-
         visitors = {}
         for vid in ('a', 'b', 'c'):
             visitors[vid] = Visitor(vid, log)
@@ -35,6 +33,8 @@ class TestLogs(TestCase):
             elif cmd == 'goal':
                 v.goal(args[0])
 
+    def _check_clickstream(self, log):
+        backend = MemoryBackend()
         worker = Worker(log, backend)
         worker.run()
 
@@ -44,8 +44,12 @@ class TestLogs(TestCase):
 
     def test_memory_log(self):
         log = MemoryLog()
-        self._run_clickstream(MemoryLog())
+        self._run_clickstream(log)
+        self._check_clickstream(log)
 
     def test_gz_log(self):
         log = GZEventLog('/tmp/manhattan-test-log')
         self._run_clickstream(log)
+
+        log2 = GZEventLog('/tmp/manhattan-test-log')
+        self._check_clickstream(log2)
