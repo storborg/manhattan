@@ -44,3 +44,26 @@ class TestVisitor(TestCase):
         self.assertEqual(self.backend.count('add to cart'), 2)
         self.assertEqual(self.backend.count('began checkout'), 1)
         self.assertEqual(self.backend.count('viewed page'), 3)
+
+        sessions = self.backend.get_sessions(goal='add to cart')
+        self.assertIn('a', sessions)
+        self.assertIn('b', sessions)
+        self.assertNotIn('c', sessions)
+
+        sessions = self.backend.get_sessions(
+            goal='add to cart',
+            variant=('red checkout form', 'False'))
+        self.assertEqual(len(sessions), 1)
+        self.assertIn('b', sessions)
+
+        sessions = self.backend.get_sessions(
+            variant=('red checkout form', 'False'))
+        self.assertEqual(len(sessions), 1)
+        self.assertIn('b', sessions)
+
+        num = self.backend.count('add to cart',
+                                 variant=('red checkout form', 'False'))
+        self.assertEqual(num, 1)
+
+        sessions = self.backend.get_sessions()
+        self.assertEqual(len(sessions), 3)

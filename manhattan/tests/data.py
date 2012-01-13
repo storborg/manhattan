@@ -11,7 +11,7 @@ test_clickstream = [
     ('page', 'b', '/cart'),
     ('goal', 'b', 'add to cart'),
     ('page', 'c', '/fruit/bananas'),
-    ('split', 'b', 'checkout form color'),
+    ('split', 'b', 'red checkout form'),
     ('page', 'b', '/checkout'),
     ('goal', 'b', 'began checkout'),
     ('page', 'a', '/cart'),
