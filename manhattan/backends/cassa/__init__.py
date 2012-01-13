@@ -38,7 +38,7 @@ Some queries we want to handle...
 Stuff should be denormalized to handle these exact queries!
 """
 
-class Backend(object):
+class CassandraBackend(object):
 
     def record_pageview(self, request):
         raise NotImplementedError

@@ -1,7 +1,6 @@
 import time
 
 from .util import choose_population
-from .log import EventLog
 
 
 class Visitor(object):

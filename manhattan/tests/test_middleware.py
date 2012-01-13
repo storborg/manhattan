@@ -1,11 +1,10 @@
 from unittest import TestCase
-from tempfile import NamedTemporaryFile
 
 from webob import Request, Response
 from webtest import TestApp
 
 from manhattan.middleware import ManhattanMiddleware
-from manhattan.log import EventLog
+from manhattan.log.memory import MemoryLog
 
 
 class SampleApp(object):
@@ -18,8 +17,7 @@ class SampleApp(object):
         return resp(environ, start_response)
 
 
-tf = NamedTemporaryFile()
-log = EventLog(tf.name)
+log = MemoryLog()
 
 app = SampleApp()
 app = ManhattanMiddleware(app, log)
