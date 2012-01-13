@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from webob import Request
 
 from manhattan.visitor import Visitor
-from manhattan.storage import FakeBackend
+from manhattan.backends.memory import MemoryBackend
 from manhattan.log import EventLog
 
 

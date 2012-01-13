@@ -41,16 +41,16 @@ Stuff should be denormalized to handle these exact queries!
 class Backend(object):
 
     def record_pageview(self, request):
-        pass
+        raise NotImplementedError
 
     def record_pixel(self):
-        pass
+        raise NotImplementedError
 
     def record_goal(self, name):
-        pass
+        raise NotImplementedError
 
     def define_intersection(self, a, b, invert_a=False, invert_b=False):
-        pass
+        raise NotImplementedError
 
     def count(self, target, variant=None, start=None, end=None):
         """
@@ -69,13 +69,10 @@ class Backend(object):
         :param end:
           Datetime, filters to conversions before this time.
         """
-        pass
+        raise NotImplementedError
 
     def get_sessions(self, target=None, variant=None, start=None, end=None):
         """
         Return a list of session ids which satisfy the given conditions.
         """
-
-
-class FakeBackend(Backend):
-    pass
+        raise NotImplementedError

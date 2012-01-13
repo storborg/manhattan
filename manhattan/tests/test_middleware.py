@@ -5,7 +5,6 @@ from webob import Request, Response
 from webtest import TestApp
 
 from manhattan.middleware import ManhattanMiddleware
-from manhattan.storage import FakeBackend
 from manhattan.log import EventLog
 
 
