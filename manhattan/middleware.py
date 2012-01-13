@@ -1,8 +1,3 @@
-import os
-import random
-import time
-from hashlib import md5
-
 from webob import Request
 from itsdangerous import Signer
 

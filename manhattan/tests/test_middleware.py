@@ -11,7 +11,7 @@ class SampleApp(object):
 
     def __call__(self, environ, start_response):
         req = Request(environ)
-        s = 'Hello World'
+        s = 'Hello World (%s)' % req.path_info
         resp = Response(s)
         resp.content_type = 'text/plain'
         return resp(environ, start_response)
@@ -27,4 +27,4 @@ app = TestApp(app)
 class TestMiddleware(TestCase):
 
     def test_request(self):
-        resp = app.get('/')
+        app.get('/')

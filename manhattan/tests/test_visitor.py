@@ -1,9 +1,9 @@
 from unittest import TestCase
-from tempfile import NamedTemporaryFile
 
 from webob import Request
 
 from manhattan.visitor import Visitor
+from manhattan.worker import Worker
 from manhattan.backends.memory import MemoryBackend
 from manhattan.log.memory import MemoryLog
 
@@ -14,6 +14,7 @@ class TestVisitor(TestCase):
 
     def setUp(self):
         self.log = MemoryLog()
+        self.backend = MemoryBackend()
         self.visitors = {}
         for vid in ('a', 'b', 'c'):
             self.visitors[vid] = Visitor(vid, self.log)
@@ -32,5 +33,9 @@ class TestVisitor(TestCase):
             elif cmd == 'goal':
                 v.goal(args[0])
 
-        records = list(self.log.process())
-        self.assertEqual(len(records), 23)
+        worker = Worker(self.log, self.backend)
+        worker.run()
+
+        self.assertEqual(self.backend.count('add to cart'), 2)
+        self.assertEqual(self.backend.count('began checkout'), 1)
+        self.assertEqual(self.backend.count('viewed page'), 3)

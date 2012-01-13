@@ -10,20 +10,23 @@ class MemoryBackend(Backend):
         self.nonbot = set()
         self.goals = defaultdict(set)
         self.populations = defaultdict(set)
+        self.all = set()
 
     def record_page(self, ts, vid, url):
+        self.goals['viewed page'].add(vid)
         self.requests[vid].append((int(ts), url))
+        self.all.add(vid)
 
     def record_pixel(self, ts, vid):
         self.nonbot.add(vid)
 
-    def record_goal(self, ts, vid, name):
-        self.goals[name].append(vid)
+    def record_goal(self, ts, vid, name, value):
+        self.goals[name].add(vid)
 
     def record_split(self, ts, vid, name, selected):
         self.populations[(name, selected)].add(vid)
 
-    def count(self, goal, variant=None, start=None, end=None):
+    def count(self, goal, variant=None):
         """
         Return a count of the number of conversions on a given target.
 
@@ -33,18 +36,24 @@ class MemoryBackend(Backend):
 
         :param variant:
           Variant object, filters to sessions which belong to a given variant.
-
-        :param start:
-          Timestamp, filters to conversions after this time.
-
-        :param end:
-          Timestamp, filters to conversions before this time.
         """
-        
-        raise NotImplementedError
+        sessions = self.goals[goal]
 
-    def get_sessions(self, target=None, variant=None, start=None, end=None):
+        if variant:
+            sessions &= self.populations[variant]
+
+        return len(sessions)
+
+    def get_sessions(self, goal=None, variant=None):
         """
         Return a list of session ids which satisfy the given conditions.
         """
-        raise NotImplementedError
+        if goal and variant:
+            sessions = self.goals[goal] & self.populations[variant]
+        elif goal:
+            sessions = self.goals[goal]
+        elif variant:
+            sessions = self.populations[variant]
+        else:
+            sessions = self.all
+        return sessions

@@ -19,3 +19,4 @@ class Worker(object):
         for record in self.log.process():
             log.info('Handling record %r', record)
             self.handle_record(record)
+        log.info('Worker finished processing.')
