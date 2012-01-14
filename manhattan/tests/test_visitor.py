@@ -1,5 +1,4 @@
 from unittest import TestCase
-from tempfile import NamedTemporaryFile
 
 from webob import Request
 

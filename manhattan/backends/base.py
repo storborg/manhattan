@@ -7,7 +7,7 @@ class Backend(object):
         record_page
 
         record_pixel
-        
+
         record_goal
 
         record_split
