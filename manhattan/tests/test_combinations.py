@@ -9,6 +9,7 @@ from manhattan.log.memory import MemoryLog
 from manhattan.log.gz import GZEventLog
 
 from manhattan.backends.memory import MemoryBackend
+from manhattan.backends.sql import SQLBackend
 
 from . import data
 
@@ -77,3 +78,9 @@ class TestCombinations(TestCase):
 
         log2 = GZEventLog('/tmp/manhattan-test-log')
         self._check_clickstream(log2, MemoryBackend())
+
+    def test_sql_backend(self):
+        log = MemoryLog()
+        self._run_clickstream(log)
+        backend = SQLBackend('sqlite:///')
+        self._check_clickstream(log, backend)
