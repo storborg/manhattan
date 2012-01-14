@@ -7,7 +7,6 @@ from manhattan.visitor import Visitor
 from manhattan.worker import Worker
 from manhattan.backends.memory import MemoryBackend
 from manhattan.log.memory import MemoryLog
-from manhattan.log.gz import GZEventLog
 
 from . import data
 
@@ -15,8 +14,7 @@ from . import data
 class TestVisitor(TestCase):
 
     def setUp(self):
-        tf = NamedTemporaryFile()
-        self.log = GZEventLog(tf.name)
+        self.log = MemoryLog()
         self.backend = MemoryBackend()
         self.visitors = {}
         for vid in ('a', 'b', 'c'):
