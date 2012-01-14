@@ -4,15 +4,16 @@ from webob import Request
 
 from manhattan.visitor import Visitor
 from manhattan.worker import Worker
-from manhattan.backends.memory import MemoryBackend
 
 from manhattan.log.memory import MemoryLog
 from manhattan.log.gz import GZEventLog
 
+from manhattan.backends.memory import MemoryBackend
+
 from . import data
 
 
-class TestLogs(TestCase):
+class TestCombinations(TestCase):
 
     def _run_clickstream(self, log):
         visitors = {}
@@ -31,9 +32,10 @@ class TestLogs(TestCase):
                 v.pixel()
             elif cmd == 'goal':
                 v.goal(args[0])
+            elif cmd == 'split':
+                v.split(args[0])
 
-    def _check_clickstream(self, log):
-        backend = MemoryBackend()
+    def _check_clickstream(self, log, backend):
         worker = Worker(log, backend)
         worker.run()
 
@@ -41,14 +43,37 @@ class TestLogs(TestCase):
         self.assertEqual(backend.count('began checkout'), 1)
         self.assertEqual(backend.count('viewed page'), 3)
 
+        sessions = backend.get_sessions(goal='add to cart')
+        self.assertIn('a', sessions)
+        self.assertIn('b', sessions)
+        self.assertNotIn('c', sessions)
+
+        sessions = backend.get_sessions(
+            goal='add to cart',
+            variant=('red checkout form', 'False'))
+        self.assertEqual(len(sessions), 1)
+        self.assertIn('b', sessions)
+
+        sessions = backend.get_sessions(
+            variant=('red checkout form', 'False'))
+        self.assertEqual(len(sessions), 1)
+        self.assertIn('b', sessions)
+
+        num = backend.count('add to cart',
+                                 variant=('red checkout form', 'False'))
+        self.assertEqual(num, 1)
+
+        sessions = backend.get_sessions()
+        self.assertEqual(len(sessions), 3)
+
     def test_memory_log(self):
         log = MemoryLog()
         self._run_clickstream(log)
-        self._check_clickstream(log)
+        self._check_clickstream(log, MemoryBackend())
 
     def test_gz_log(self):
         log = GZEventLog('/tmp/manhattan-test-log')
         self._run_clickstream(log)
 
         log2 = GZEventLog('/tmp/manhattan-test-log')
-        self._check_clickstream(log2)
+        self._check_clickstream(log2, MemoryBackend())
