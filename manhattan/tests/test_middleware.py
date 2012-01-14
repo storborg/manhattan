@@ -18,6 +18,19 @@ class SampleApp(object):
             s = 'Hello %s' % req.path_info
             resp = Response(s)
             resp.content_type = 'text/plain'
+        elif req.path_info.endswith('.iter'):
+            resp = Response()
+            s = 'Hello %s' % req.path_info
+
+            def app_iter(sample):
+                for piece in ('<html><body>', sample, '</body>', '</html>'):
+                    yield piece
+                self.consumed_iter = True
+                yield ' '
+
+            self.consumed_iter = False
+            resp.content_type = 'text/html'
+            resp.app_iter = app_iter(s)
         else:
             s = '<html><body><h1>Hello %s</h1></body></html>' % req.path_info
             resp = Response(s)
@@ -28,9 +41,9 @@ class SampleApp(object):
 
 log = MemoryLog()
 
-app = SampleApp()
-app = ManhattanMiddleware(app, log)
-app = TestApp(app)
+inner_app = SampleApp()
+wrapped_app = ManhattanMiddleware(inner_app, log)
+app = TestApp(wrapped_app)
 
 
 class TestMiddleware(TestCase):
@@ -67,8 +80,21 @@ class TestMiddleware(TestCase):
 
     def test_pixel_req(self):
         resp = app.get('/vpixel.gif')
-        self.assertEqual(resp.content_type, 'image/gif')
+        self.assertEqual(resp.content_type, 'image/gif',
+                         'An html response should have a pixel tag.')
 
     def test_non_html_pixel(self):
         resp = app.get('/non-html-page.txt')
-        self.assertNotIn('/vpixel.gif', resp.body)
+        self.assertNotIn('/vpixel.gif', resp.body,
+                         'A non-html response should not have a pixel tag.')
+
+    def test_generator_response(self):
+        req = Request.blank('/quux.iter')
+        resp = req.get_response(wrapped_app)
+
+        self.assertFalse(inner_app.consumed_iter,
+                         'The generator response has been buffered by '
+                         'middleware before instead of being returned as an '
+                         'iterable.')
+        self.assertIn('/vpixel.gif', resp.body)
+        self.assertTrue(inner_app.consumed_iter)

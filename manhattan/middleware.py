@@ -17,7 +17,12 @@ class ManhattanMiddleware(object):
 
     def inject_pixel(self, resp):
         tag = pixel_tag(self.pixel_path)
-        resp.body = resp.body.replace('</body>', '%s</body>' % tag)
+
+        def wrap_iter(orig_iter):
+            for chunk in orig_iter:
+                yield chunk.replace('</body>', '%s</body>' % tag)
+
+        resp.app_iter = wrap_iter(resp.app_iter)
         resp.content_length = None
 
     def handle_pixel(self, visitor, fresh):
