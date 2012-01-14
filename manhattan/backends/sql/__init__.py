@@ -37,6 +37,16 @@ class SQLBackend(Backend):
                                          value_type=None,
                                          value_format=None)
         model.Conversion.find_or_create(visitor=vis, goal=goal)
+
+        variants = meta.Session.query(model.Variant).\
+                join(model.Variant.impressions).\
+                filter_by(visitor=vis)
+
+        for variant in variants:
+            model.VariantConversion.find_or_create(goal=goal,
+                                                   visitor=vis,
+                                                   variant=variant)
+
         meta.Session.commit()
 
     def record_split(self, ts, vid, name, selected):

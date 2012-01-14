@@ -54,6 +54,18 @@ class Conversion(Base):
     visitor = orm.relationship('Visitor')
 
 
+class VariantConversion(Base):
+    __tablename__ = 'variant_conversions'
+    __table_args__ = {'mysql_engine': 'InnoDB'}
+    goal_id = Column(None, ForeignKey('goals.id'), primary_key=True)
+    variant_id = Column(None, ForeignKey('variants.id'), primary_key=True)
+    visitor_id = Column(None, ForeignKey('visitors.visitor_id'),
+                        primary_key=True)
+    goal = orm.relationship('Goal')
+    variant = orm.relationship('Variant')
+    visitor = orm.relationship('Visitor')
+
+
 class Test(Base):
     __tablename__ = "tests"
     __table_args__ = {'mysql_engine': 'InnoDB'}
@@ -76,5 +88,5 @@ class Impression(Base):
     variant_id = Column(None, ForeignKey('variants.id'), primary_key=True)
     visitor_id = Column(None, ForeignKey('visitors.visitor_id'),
                         primary_key=True)
-    variant = orm.relationship('Variant')
+    variant = orm.relationship('Variant', backref='impressions')
     visitor = orm.relationship('Visitor')
