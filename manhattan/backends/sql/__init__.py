@@ -18,7 +18,7 @@ class SQLBackend(Backend):
                                            timestamp=ts)
         vis.timestamp = ts
 
-        self.record_goal(ts, vid, 'viewed page', None)
+        self.record_goal(ts, vid, 'viewed page', None, None, None)
 
         req = model.Request(visitor=vis,
                             timestamp=ts,
@@ -34,7 +34,7 @@ class SQLBackend(Backend):
         vis.bot = False
         meta.Session.commit()
 
-    def record_goal(self, ts, vid, name, value):
+    def record_goal(self, ts, vid, name, value, value_type, value_format):
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         goal = model.Goal.find_or_create(name=name,
                                          value_type=None,

@@ -7,6 +7,17 @@ from .util import choose_population
 log = logging.getLogger(__name__)
 
 
+# Goal Value Aggregation Types
+RATE = 'R'
+AVERAGE = 'A'
+SUM = 'S'
+
+# Goal Value Measurement Formats
+NUMERIC = 'N'
+CURRENCY = 'C'
+PERCENTAGE = 'P'
+
+
 class Visitor(object):
     """
     A handle to perform operations on the given visitor session.
@@ -70,7 +81,7 @@ class Visitor(object):
         :param value_type:
             Type of goal value aggregation to perform.
         :type value_type:
-            AVERAGE or SUM
+            RATE, AVERAGE or SUM
         :param value_format:
             Display format for this goal value.
         :type value_format:
@@ -78,7 +89,7 @@ class Visitor(object):
         """
         log.debug('goal: %s %s', self.id, name)
         self.log.write(['goal', str(self.timestamp()), self.id, name,
-                        str(value)])
+                        value or '', value_type or '', value_format or ''])
 
     def split(self, test_name, populations=None):
         """

@@ -14,7 +14,7 @@ class MemoryBackend(Backend):
         self.all = set()
 
     def record_page(self, ts, vid, url, ip, method, user_agent):
-        self.goals['viewed page'].add(vid)
+        self.record_goal(ts, vid, 'viewed page')
         self.visitors[vid] = dict(ip=ip, user_agent=user_agent)
         self.requests[vid].append((int(ts), url, ip, method))
         self.all.add(vid)
@@ -22,7 +22,8 @@ class MemoryBackend(Backend):
     def record_pixel(self, ts, vid):
         self.nonbot.add(vid)
 
-    def record_goal(self, ts, vid, name, value):
+    def record_goal(self, ts, vid, name, value=None, value_type=None,
+                    value_format=None):
         self.goals[name].add(vid)
 
     def record_split(self, ts, vid, name, selected):
