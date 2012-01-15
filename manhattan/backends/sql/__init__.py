@@ -14,7 +14,7 @@ class SQLBackend(Backend):
         meta.metadata.create_all()
 
     def record_page(self, ts, vid, url):
-        vis = model.Visitor.find_or_create(visitor_id=vid)
+        vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         vis.timestamp = ts
 
         self.record_goal(ts, vid, 'viewed page', None)
@@ -27,12 +27,12 @@ class SQLBackend(Backend):
         meta.Session.commit()
 
     def record_pixel(self, ts, vid):
-        vis = model.Visitor.find_or_create(visitor_id=vid)
+        vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         vis.bot = False
         meta.Session.commit()
 
     def record_goal(self, ts, vid, name, value):
-        vis = model.Visitor.find_or_create(visitor_id=vid)
+        vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         goal = model.Goal.find_or_create(name=name,
                                          value_type=None,
                                          value_format=None)
@@ -50,7 +50,7 @@ class SQLBackend(Backend):
         meta.Session.commit()
 
     def record_split(self, ts, vid, name, selected):
-        vis = model.Visitor.find_or_create(visitor_id=vid)
+        vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         test = model.Test.find_or_create(name=name)
         variant = model.Variant.find_or_create(test=test, name=selected)
         model.Impression.find_or_create(visitor=vis, variant=variant)

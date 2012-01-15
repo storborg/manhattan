@@ -1,6 +1,7 @@
 from sqlalchemy import Column, ForeignKey, types, orm
+from sqlalchemy.orm.exc import NoResultFound
 
-from . import meta
+from . import meta, custom_types
 from .base import Base
 
 
@@ -19,8 +20,21 @@ class Visitor(Base):
     __tablename__ = 'visitors'
     __table_args__ = {'mysql_engine': 'InnoDB'}
     visitor_id = Column(types.BINARY(40), primary_key=True)
-    timestamp = Column(types.Integer, nullable=False)
     bot = Column(types.Boolean, nullable=False, default=True)
+    first_timestamp = Column(types.Integer, nullable=False)
+    last_timestamp = Column(types.Integer, nullable=False)
+
+    @classmethod
+    def find_or_create(cls, visitor_id, timestamp):
+        try:
+            vis = meta.Session.query(cls).\
+                    filter_by(visitor_id=visitor_id).one()
+        except NoResultFound:
+            vis = cls(visitor_id=visitor_id,
+                      first_timestamp=timestamp)
+            meta.Session.add(vis)
+        vis.last_timestamp = timestamp
+        return vis
 
 
 class Request(Base):
