@@ -8,13 +8,15 @@ class MemoryBackend(Backend):
     def __init__(self):
         self.requests = defaultdict(list)
         self.nonbot = set()
+        self.visitors = {}
         self.goals = defaultdict(set)
         self.populations = defaultdict(set)
         self.all = set()
 
-    def record_page(self, ts, vid, url):
+    def record_page(self, ts, vid, url, ip, method, user_agent):
         self.goals['viewed page'].add(vid)
-        self.requests[vid].append((int(ts), url))
+        self.visitors[vid] = dict(ip=ip, user_agent=user_agent)
+        self.requests[vid].append((int(ts), url, ip, method))
         self.all.add(vid)
 
     def record_pixel(self, ts, vid):

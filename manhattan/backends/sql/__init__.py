@@ -13,15 +13,18 @@ class SQLBackend(Backend):
         model.init_model(self.engine)
         meta.metadata.create_all()
 
-    def record_page(self, ts, vid, url):
-        vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
+    def record_page(self, ts, vid, url, ip, method, user_agent):
+        vis = model.Visitor.find_or_create(visitor_id=vid,
+                                           timestamp=ts)
         vis.timestamp = ts
 
         self.record_goal(ts, vid, 'viewed page', None)
 
         req = model.Request(visitor=vis,
                             timestamp=ts,
-                            url=url)
+                            url=url,
+                            ip=ip,
+                            method=method)
         meta.Session.add(req)
 
         meta.Session.commit()

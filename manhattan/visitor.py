@@ -42,7 +42,11 @@ class Visitor(object):
             webob.Request instance
         """
         log.debug('page: %s %s', self.id, request.url)
-        self.log.write(['page', str(self.timestamp()), self.id, request.url])
+        self.log.write(['page', str(self.timestamp()), self.id,
+                        request.url,
+                        request.remote_addr or '0.0.0.0',
+                        request.method,
+                        request.user_agent or ''])
 
     def pixel(self):
         """

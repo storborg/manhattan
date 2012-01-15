@@ -45,6 +45,8 @@ class Request(Base):
                         unique=False, index=True)
     timestamp = Column(types.Integer, nullable=False)
     url = Column(types.String(255), nullable=False)
+    ip = Column(custom_types.IP, nullable=False)
+    method = Column(types.CHAR(5), nullable=False)
 
     visitor = orm.relationship('Visitor')
 
