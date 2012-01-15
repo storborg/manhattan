@@ -61,10 +61,6 @@ class SQLBackend(Backend):
 
         if goal:
             goal = meta.Session.query(model.Goal).filter_by(name=goal).one()
-            q = q.join(model.Conversion,
-                       model.Conversion.visitor_id ==
-                       model.Visitor.visitor_id).\
-                    filter(model.Conversion.goal == goal)
 
         if variant:
             test_name, pop_name = variant
@@ -74,11 +70,26 @@ class SQLBackend(Backend):
             variant = meta.Session.query(model.Variant).\
                     filter_by(test=test, name=pop_name).one()
 
+        if goal and variant:
+            # Use VariantConversion table.
+            q = q.join(model.VariantConversion,
+                       model.VariantConversion.visitor_id ==
+                       model.Visitor.visitor_id).\
+                    filter(model.VariantConversion.goal == goal).\
+                    filter(model.VariantConversion.variant == variant)
+
+        elif goal:
+            # Use Conversion table.
+            q = q.join(model.Conversion,
+                       model.Conversion.visitor_id ==
+                       model.Visitor.visitor_id).\
+                    filter(model.Conversion.goal == goal)
+        elif variant:
+            # Use Impression table.
             q = q.join(model.Impression,
                        model.Impression.visitor_id ==
                        model.Visitor.visitor_id).\
                     filter(model.Impression.variant == variant)
-
         return q
 
     def count(self, goal, variant=None):

@@ -50,7 +50,7 @@ class TestCombinations(TestCase):
         self.assertNotIn('c', sessions)
 
         sessions = backend.get_sessions(
-            goal='add to cart',
+            goal='completed checkout',
             variant=('red checkout form', 'False'))
         self.assertEqual(len(sessions), 1)
         self.assertIn('b', sessions)
@@ -60,8 +60,8 @@ class TestCombinations(TestCase):
         self.assertEqual(len(sessions), 1)
         self.assertIn('b', sessions)
 
-        num = backend.count('add to cart',
-                                 variant=('red checkout form', 'False'))
+        num = backend.count('completed checkout',
+                            variant=('red checkout form', 'False'))
         self.assertEqual(num, 1)
 
         sessions = backend.get_sessions()
