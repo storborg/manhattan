@@ -43,7 +43,7 @@ class Request(Base):
     id = Column(types.Integer, primary_key=True)
     visitor_id = Column(None, ForeignKey('visitors.visitor_id'),
                         unique=False, index=True)
-    timestamp = Column(types.Integer, nullable=False)
+    timestamp = Column(types.Integer, nullable=False, index=True, unique=False)
     url = Column(types.String(255), nullable=False)
     ip = Column(custom_types.IP, nullable=False)
     method = Column(types.CHAR(5), nullable=False)

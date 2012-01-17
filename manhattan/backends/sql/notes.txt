@@ -1,0 +1,64 @@
+Two "tables"
+
+<time bucket, variant_id, impressions>
+
+<time bucket, variant_id, target, conversions>
+
+
+Some queries we currently handle....
+
+- # of conversions on target A between time X and time Y.
+
+select sum(vc.count) from variant_conversion_days as vc
+where vc.variant_id = ? and vc.goal_id = ?
+and vc.bucket > ? vc.bucket <= ?
+
+- # of sessions that have activity in the last X minutes which have hit target
+A but not target B
+
+select count(*)
+from visitors, requests, conversions as c1
+left outer join conversions c2
+where visitors.visitor_id = requests.visitor_id
+on (c2.visitor_id = visitors.visitor_id and c2.goal_id = ?)
+and c1.visitor_id = visitors.visitor_id
+and requests.timestamp > ?
+and c2.goal_id is null;
+
+- # of sessions with variant Z
+
+select vc.count from variant_totals as vc
+where vc.variant_id = ?
+
+- # of conversions on target A with variant Z
+
+select vc.count from variant_conversion_totals as vc
+where vc.variant_id = ? and vc.goal_id = ?
+
+- Average of target A value with variant Z
+
+select vc.value / vc.count from variant_conversion_totals as v
+where vc.variant_id = ? and vc.goal_id = ?
+
+- Recent sessions
+
+select visitors.* from visitors, requests
+where visitors.visitor_id = requests.visitor_id
+order by requests.id desc
+limit 200
+
+- Exact sessions that have hit target A but not target B
+
+select visitors.*
+from visitors, conversions as c1
+left outer join conversions c2
+on (c2.visitor_id = visitors.visitor_id and c2.goal_id = ?)
+and c1.visitor_id = visitors.visitor_id
+and c2.goal_id is null;
+
+Some queries we want to handle...
+
+- # of sessions assigned to variant Z between time X and time Y
+- # of conversions on target A with variant Z between time X and time Y
+
+Stuff should be denormalized to handle these exact queries!
