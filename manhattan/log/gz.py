@@ -12,10 +12,10 @@ class GZEventLog(object):
         self.writer = GZLog(path)
 
     def format(self, elements):
-        return '\t'.join(el.replace('\t', ' ') for el in elements)
+        return '\t'.join(el.encode('string_escape') for el in elements)
 
     def parse(self, record):
-        return record.split('\t')
+        return [el.decode('string_escape') for el in record.split('\t')]
 
     def write(self, elements):
         log.info('Writing record: %r', elements)
