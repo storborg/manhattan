@@ -1,12 +1,14 @@
 from unittest import TestCase
 
 from webob import Request
+import zmq
 
 from manhattan.visitor import Visitor
 from manhattan.worker import Worker
 
 from manhattan.log.memory import MemoryLog
 from manhattan.log.gz import GZEventLog
+from manhattan.log.zeromq import ZeroMQLog
 
 from manhattan.backends.memory import MemoryBackend
 from manhattan.backends.sql import SQLBackend
@@ -78,6 +80,14 @@ class TestCombinations(TestCase):
 
         log2 = GZEventLog('/tmp/manhattan-test-log')
         self._check_clickstream(log2, MemoryBackend())
+
+    def test_zeromq_log(self):
+        ctx = zmq.Context()
+        log_r = ZeroMQLog(ctx, 'r', stay_alive=False, endpoints='tcp://*:8128')
+        log_w = ZeroMQLog(ctx, 'w')
+
+        self._run_clickstream(log_w)
+        self._check_clickstream(log_r, MemoryBackend())
 
     def test_sql_backend(self):
         log = MemoryLog()

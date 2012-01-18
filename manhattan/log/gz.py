@@ -2,20 +2,16 @@ import logging
 
 from gzlog import GZLog
 
+from .text import TextLog
+
 log = logging.getLogger(__name__)
 
 
-class GZEventLog(object):
+class GZEventLog(TextLog):
 
     def __init__(self, path):
         log.info('Creating GZEventLog at %r', path)
         self.writer = GZLog(path)
-
-    def format(self, elements):
-        return '\t'.join(el.encode('string_escape') for el in elements)
-
-    def parse(self, record):
-        return [el.decode('string_escape') for el in record.split('\t')]
 
     def write(self, elements):
         log.info('Writing record: %r', elements)
