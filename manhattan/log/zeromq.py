@@ -4,16 +4,15 @@ from .text import TextLog
 
 
 class ZeroMQLog(TextLog):
-    def __init__(self, ctx, mode='w', endpoints='tcp://localhost:8128',
-                 stay_alive=True):
+    def __init__(self, ctx, mode='w', endpoints=None, stay_alive=True):
         self.ctx = ctx
         self.stay_alive = stay_alive
         if mode == 'w':
             self.sock = ctx.socket(zmq.PUB)
-            self.sock.connect(endpoints)
+            self.sock.connect(endpoints or 'tcp://localhost:8128')
         else:
             self.sock = ctx.socket(zmq.SUB)
-            self.sock.bind(endpoints)
+            self.sock.bind(endpoints or 'tcp://*:8128')
             self.sock.setsockopt(zmq.SUBSCRIBE, '')
 
     def write(self, elements):
