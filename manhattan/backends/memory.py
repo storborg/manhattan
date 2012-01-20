@@ -13,7 +13,7 @@ class MemoryBackend(Backend):
         self.populations = defaultdict(set)
         self.all = set()
 
-    def record_page(self, ts, vid, url, ip, method, user_agent):
+    def record_page(self, ts, vid, url, ip, method, user_agent, referer):
         self.record_goal(ts, vid, 'viewed page')
         self.visitors[vid] = dict(ip=ip, user_agent=user_agent)
         self.requests[vid].append((int(ts), url, ip, method))

@@ -57,7 +57,8 @@ class Visitor(object):
                         request.url,
                         request.remote_addr or '0.0.0.0',
                         request.method,
-                        request.user_agent or ''])
+                        request.user_agent or '',
+                        request.referer or ''])
 
     def pixel(self):
         """
