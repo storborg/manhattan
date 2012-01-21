@@ -54,9 +54,9 @@ class Visitor(object):
         """
         log.debug('page: %s %s', self.id, request.url)
         self.log.write(['page', self.timestamp(), self.id,
-                        request.url,
                         request.remote_addr or '0.0.0.0',
                         request.method,
+                        request.url,
                         request.user_agent or '',
                         request.referer or ''])
 

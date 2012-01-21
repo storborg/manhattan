@@ -76,7 +76,7 @@ class TestMiddleware(TestCase):
         self.assertEqual(len(records), 1)
         record = records[0]
         self.assertEqual(record[0], 'page')
-        self.assertTrue(record[3].endswith('/foo'))
+        self.assertTrue(record[5].endswith('/foo'))
 
     def test_pixel_req(self):
         resp = app.get('/vpixel.gif')

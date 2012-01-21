@@ -13,7 +13,7 @@ class SQLBackend(Backend):
         model.init_model(self.engine)
         meta.metadata.create_all()
 
-    def record_page(self, ts, vid, url, ip, method, user_agent, referer):
+    def record_page(self, ts, vid, ip, method, url, user_agent, referer):
         vis = model.Visitor.find_or_create(visitor_id=vid,
                                            timestamp=ts)
         vis.timestamp = ts
