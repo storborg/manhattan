@@ -41,7 +41,7 @@ class Visitor(object):
         Override this to generate event timestamps in a different way. Defaults
         to the POSIX epoch.
         """
-        return int(time.time())
+        return '%0.4f' % time.time()
 
     def page(self, request):
         """
@@ -53,7 +53,7 @@ class Visitor(object):
             webob.Request instance
         """
         log.debug('page: %s %s', self.id, request.url)
-        self.log.write(['page', str(self.timestamp()), self.id,
+        self.log.write(['page', self.timestamp(), self.id,
                         request.url,
                         request.remote_addr or '0.0.0.0',
                         request.method,
@@ -65,7 +65,7 @@ class Visitor(object):
         Log a pixel view for this visitor.
         """
         log.debug('pixel: %s', self.id)
-        self.log.write(['pixel', str(self.timestamp()), self.id])
+        self.log.write(['pixel', self.timestamp(), self.id])
 
     def goal(self, name, value=None, value_type=None, value_format=None):
         """
@@ -89,7 +89,7 @@ class Visitor(object):
             NUMERIC, CURRENCY, or PERCENTAGE
         """
         log.debug('goal: %s %s', self.id, name)
-        self.log.write(['goal', str(self.timestamp()), self.id, name,
+        self.log.write(['goal', self.timestamp(), self.id, name,
                         value or '', value_type or '', value_format or ''])
 
     def split(self, test_name, populations=None):
@@ -116,6 +116,6 @@ class Visitor(object):
         """
         log.debug('split: %s %s', self.id, test_name)
         selected = choose_population(self.id + test_name, populations)
-        self.log.write(['split', str(self.timestamp()), self.id, test_name,
+        self.log.write(['split', self.timestamp(), self.id, test_name,
                         str(selected)])
         return selected

@@ -14,6 +14,7 @@ class MemoryBackend(Backend):
         self.all = set()
 
     def record_page(self, ts, vid, url, ip, method, user_agent, referer):
+        ts = float(ts)
         self.record_goal(ts, vid, 'viewed page')
         self.visitors[vid] = dict(ip=ip, user_agent=user_agent)
         self.requests[vid].append((int(ts), url, ip, method))
@@ -24,6 +25,7 @@ class MemoryBackend(Backend):
 
     def record_goal(self, ts, vid, name, value=None, value_type=None,
                     value_format=None):
+        ts = float(ts)
         self.goals[name].add(vid)
 
     def record_split(self, ts, vid, name, selected):
