@@ -48,8 +48,8 @@ class ManhattanMiddleware(object):
             resp = self.handle_pixel(visitor, fresh)
             return resp(environ, start_response)
 
-        visitor.page(req)
         resp = req.get_response(self.app)
+        visitor.page(req)
 
         if fresh:
             resp.set_cookie(self.cookie_name, self.signer.sign(visitor.id))
