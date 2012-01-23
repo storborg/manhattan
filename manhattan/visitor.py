@@ -22,7 +22,7 @@ class Visitor(object):
     """
     A handle to perform operations on the given visitor session.
     """
-    def __init__(self, id, log):
+    def __init__(self, id, log, site_id=''):
         """
         Initialize the Visitor handle.
 
@@ -35,6 +35,7 @@ class Visitor(object):
         """
         self.id = id
         self.log = log
+        self.site_id = str(site_id)
 
     def timestamp(self):
         """
@@ -53,7 +54,9 @@ class Visitor(object):
             webob.Request instance
         """
         log.debug('page: %s %s', self.id, request.url)
-        self.log.write(['page', self.timestamp(), self.id,
+        self.log.write(['page', self.timestamp(),
+                        self.id,
+                        self.site_id,
                         request.remote_addr or '0.0.0.0',
                         request.method,
                         request.url,
@@ -65,7 +68,7 @@ class Visitor(object):
         Log a pixel view for this visitor.
         """
         log.debug('pixel: %s', self.id)
-        self.log.write(['pixel', self.timestamp(), self.id])
+        self.log.write(['pixel', self.timestamp(), self.id, self.site_id])
 
     def goal(self, name, value=None, value_type=None, value_format=None):
         """
@@ -89,7 +92,7 @@ class Visitor(object):
             NUMERIC, CURRENCY, or PERCENTAGE
         """
         log.debug('goal: %s %s', self.id, name)
-        self.log.write(['goal', self.timestamp(), self.id, name,
+        self.log.write(['goal', self.timestamp(), self.id, self.site_id, name,
                         value or '', value_type or '', value_format or ''])
 
     def split(self, test_name, populations=None):
@@ -116,6 +119,6 @@ class Visitor(object):
         """
         log.debug('split: %s %s', self.id, test_name)
         selected = choose_population(self.id + test_name, populations)
-        self.log.write(['split', self.timestamp(), self.id, test_name,
-                        str(selected)])
+        self.log.write(['split', self.timestamp(), self.id, self.site_id,
+                        test_name, str(selected)])
         return selected

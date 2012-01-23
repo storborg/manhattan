@@ -41,8 +41,11 @@ class SampleApp(object):
 
 log = MemoryLog()
 
+host_map = {'localhost': 3,
+            'example.com': 5}
+
 inner_app = SampleApp()
-wrapped_app = ManhattanMiddleware(inner_app, log)
+wrapped_app = ManhattanMiddleware(inner_app, log, host_map=host_map)
 app = TestApp(wrapped_app)
 
 
@@ -50,15 +53,16 @@ class TestMiddleware(TestCase):
 
     def setUp(self):
         app.reset()
+        log.purge()
 
     def test_request(self):
-        log.purge()
         resp = app.get('/')
 
         records = list(log.process())
         self.assertEqual(len(records), 1)
         record = records[0]
         self.assertEqual(record[0], 'page')
+        self.assertEqual(record[3], '3')  # site_id = 3
 
         m = re.search('<img src="(.+)" alt="" />', resp.body)
         pixel_path = m.group(1)
@@ -69,6 +73,7 @@ class TestMiddleware(TestCase):
         self.assertEqual(len(records), 1)
         record = records[0]
         self.assertEqual(record[0], 'pixel')
+        self.assertEqual(record[3], '3')
 
         resp = app.get('/foo')
 
@@ -76,7 +81,30 @@ class TestMiddleware(TestCase):
         self.assertEqual(len(records), 1)
         record = records[0]
         self.assertEqual(record[0], 'page')
-        self.assertTrue(record[5].endswith('/foo'))
+        self.assertTrue(record[6].endswith('/foo'))
+        self.assertEqual(record[3], '3')
+
+    def test_host_map(self):
+        resp = app.get('/hello', extra_environ={'HTTP_HOST': 'example.com'})
+        self.assertEqual(resp.content_type, 'text/html')
+        records = list(log.process())
+        self.assertEqual(len(records), 1)
+        record = records[0]
+        self.assertEqual(record[0], 'page')
+        self.assertTrue(record[6].endswith('/hello'))
+        self.assertEqual(record[3], '5')
+
+    def test_unknown_host(self):
+        resp = app.get('/somepage',
+                       extra_environ={'HTTP_HOST':
+                                      'supercalifragilicious.com'})
+        self.assertEqual(resp.content_type, 'text/html')
+        records = list(log.process())
+        self.assertEqual(len(records), 1)
+        record = records[0]
+        self.assertEqual(record[0], 'page')
+        self.assertTrue(record[6].endswith('/somepage'))
+        self.assertEqual(record[3], '0')
 
     def test_pixel_req(self):
         resp = app.get('/vpixel.gif')

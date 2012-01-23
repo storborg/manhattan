@@ -8,12 +8,13 @@ from .util import nonce, transparent_pixel, pixel_tag
 class ManhattanMiddleware(object):
 
     def __init__(self, app, log, secret_key='blah', cookie_name='vis',
-                 pixel_path='/vpixel.gif'):
+                 pixel_path='/vpixel.gif', host_map=None):
         self.app = app
         self.cookie_name = cookie_name
         self.log = log
         self.signer = Signer(secret_key)
         self.pixel_path = pixel_path
+        self.host_map = host_map or {}
 
     def inject_pixel(self, resp):
         tag = pixel_tag(self.pixel_path)
@@ -42,7 +43,10 @@ class ManhattanMiddleware(object):
             vid = nonce()
             fresh = True
 
-        req.environ['manhattan.visitor'] = visitor = Visitor(vid, self.log)
+        site_id = self.host_map.get(req.host.split(':', 1)[0], 0)
+
+        req.environ['manhattan.visitor'] = visitor = Visitor(vid, self.log,
+                                                             site_id)
 
         if self.pixel_path and req.path_info == self.pixel_path:
             resp = self.handle_pixel(visitor, fresh)

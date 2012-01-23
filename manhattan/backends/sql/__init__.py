@@ -13,12 +13,13 @@ class SQLBackend(Backend):
         model.init_model(self.engine)
         meta.metadata.create_all()
 
-    def record_page(self, ts, vid, ip, method, url, user_agent, referer):
+    def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
+                    referer):
         vis = model.Visitor.find_or_create(visitor_id=vid,
                                            timestamp=ts)
         vis.timestamp = ts
 
-        self.record_goal(ts, vid, 'viewed page', None, None, None)
+        self.record_goal(ts, vid, site_id, 'viewed page', None, None, None)
 
         req = model.Request(visitor=vis,
                             timestamp=ts,
@@ -29,12 +30,13 @@ class SQLBackend(Backend):
 
         meta.Session.commit()
 
-    def record_pixel(self, ts, vid):
+    def record_pixel(self, ts, vid, site_id):
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         vis.bot = False
         meta.Session.commit()
 
-    def record_goal(self, ts, vid, name, value, value_type, value_format):
+    def record_goal(self, ts, vid, site_id, name,
+                    value, value_type, value_format):
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         goal = model.Goal.find_or_create(name=name,
                                          value_type=None,
@@ -52,7 +54,7 @@ class SQLBackend(Backend):
 
         meta.Session.commit()
 
-    def record_split(self, ts, vid, name, selected):
+    def record_split(self, ts, vid, site_id, name, selected):
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         test = model.Test.find_or_create(name=name)
         variant = model.Variant.find_or_create(test=test, name=selected)

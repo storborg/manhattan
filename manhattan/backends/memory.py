@@ -13,22 +13,23 @@ class MemoryBackend(Backend):
         self.populations = defaultdict(set)
         self.all = set()
 
-    def record_page(self, ts, vid, ip, method, url, user_agent, referer):
+    def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
+                    referer):
         ts = float(ts)
-        self.record_goal(ts, vid, 'viewed page')
+        self.record_goal(ts, vid, site_id, 'viewed page')
         self.visitors[vid] = dict(ip=ip, user_agent=user_agent)
         self.requests[vid].append((int(ts), url, ip, method))
         self.all.add(vid)
 
-    def record_pixel(self, ts, vid):
+    def record_pixel(self, ts, vid, site_id):
         self.nonbot.add(vid)
 
-    def record_goal(self, ts, vid, name, value=None, value_type=None,
+    def record_goal(self, ts, vid, site_id, name, value=None, value_type=None,
                     value_format=None):
         ts = float(ts)
         self.goals[name].add(vid)
 
-    def record_split(self, ts, vid, name, selected):
+    def record_split(self, ts, vid, site_id, name, selected):
         self.populations[(name, selected)].add(vid)
 
     def count(self, goal, variant=None):
