@@ -3,6 +3,7 @@ import logging
 import time
 
 from .util import choose_population
+from .record import PageRecord, PixelRecord, GoalRecord, SplitRecord
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +45,9 @@ class Visitor(object):
         """
         return '%0.4f' % time.time()
 
+    def write(self, rec):
+        self.log.write(rec.to_list())
+
     def page(self, request):
         """
         Log a page view for this visitor.
@@ -54,21 +58,25 @@ class Visitor(object):
             webob.Request instance
         """
         log.debug('page: %s %s', self.id, request.url)
-        self.log.write(['page', self.timestamp(),
-                        self.id,
-                        self.site_id,
-                        request.remote_addr or '0.0.0.0',
-                        request.method,
-                        request.url,
-                        request.user_agent or '',
-                        request.referer or ''])
+        rec = PageRecord(timestamp=self.timestamp(),
+                         vid=self.id,
+                         site_id=self.site_id,
+                         ip=request.remote_addr or '0.0.0.0',
+                         method=request.method,
+                         url=request.url,
+                         user_agent=request.user_agent or '',
+                         referer=request.referer or '')
+        self.write(rec)
 
     def pixel(self):
         """
         Log a pixel view for this visitor.
         """
         log.debug('pixel: %s', self.id)
-        self.log.write(['pixel', self.timestamp(), self.id, self.site_id])
+        rec = PixelRecord(timestamp=self.timestamp(),
+                          vid=self.id,
+                          site_id=self.site_id)
+        self.write(rec)
 
     def goal(self, name, value=None, value_type=None, value_format=None):
         """
@@ -92,8 +100,14 @@ class Visitor(object):
             NUMERIC, CURRENCY, or PERCENTAGE
         """
         log.debug('goal: %s %s', self.id, name)
-        self.log.write(['goal', self.timestamp(), self.id, self.site_id, name,
-                        value or '', value_type or '', value_format or ''])
+        rec = GoalRecord(timestamp=self.timestamp(),
+                         vid=self.id,
+                         site_id=self.site_id,
+                         name=name,
+                         value=value or '',
+                         value_type=value_type or '',
+                         value_format=value_format or '')
+        self.write(rec)
 
     def split(self, test_name, populations=None):
         """
@@ -119,6 +133,10 @@ class Visitor(object):
         """
         log.debug('split: %s %s', self.id, test_name)
         selected = choose_population(self.id + test_name, populations)
-        self.log.write(['split', self.timestamp(), self.id, self.site_id,
-                        test_name, str(selected)])
+        rec = SplitRecord(timestamp=self.timestamp(),
+                          vid=self.id,
+                          site_id=self.site_id,
+                          test_name=test_name,
+                          selected=str(selected))
+        self.write(rec)
         return selected
