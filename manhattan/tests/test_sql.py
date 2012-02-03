@@ -2,7 +2,7 @@ from unittest import TestCase
 from sqlalchemy import MetaData, Column, types, orm, exc
 from sqlalchemy.ext.declarative import declarative_base
 
-from manhattan.backends.sql.model import custom_types
+from manhattan.backends.sql.model import custom_types, timeseries
 
 
 becomes_sentinel = object()
@@ -55,3 +55,19 @@ class TestIPType(TestTypeAbstract):
     def test_invalid_ip_fails(self):
         with self.assertRaises(exc.StatementError):
             self.store('288.421.212.1')
+
+
+class TestTimeSeries(TestCase):
+
+    def test_bucket_for_invalid_granularity(self):
+        with self.assertRaises(ValueError):
+            timeseries.bucket_for_timestamp('picoseconds', 1234)
+
+    def test_bucket_for_timestamp(self):
+        ts = 1327899798
+        for gg, desired in  [('all', 0),
+                             ('month', 1325404800),
+                             ('week', 1327305600),
+                             ('day', 1327824000),
+                             ('hour', 1327899600)]:
+            self.assertEqual(timeseries.bucket_for_timestamp(gg, ts), desired)

@@ -1,8 +1,12 @@
+import logging
+
 from sqlalchemy import Column, ForeignKey, types, orm
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import meta, custom_types
 from .base import Base
+
+log = logging.getLogger(__name__)
 
 
 def init_model(engine):
@@ -19,7 +23,7 @@ def init_model(engine):
 class Visitor(Base):
     __tablename__ = 'visitors'
     __table_args__ = {'mysql_engine': 'InnoDB'}
-    visitor_id = Column(types.BINARY(40), primary_key=True)
+    visitor_id = Column(types.CHAR(40), primary_key=True)
     bot = Column(types.Boolean, nullable=False, default=True)
     first_timestamp = Column(types.Integer, nullable=False)
     last_timestamp = Column(types.Integer, nullable=False)
@@ -29,9 +33,11 @@ class Visitor(Base):
         try:
             vis = meta.Session.query(cls).\
                     filter_by(visitor_id=visitor_id).one()
+            vis.is_new = False
         except NoResultFound:
             vis = cls(visitor_id=visitor_id,
                       first_timestamp=timestamp)
+            vis.is_new = True
             meta.Session.add(vis)
         vis.last_timestamp = timestamp
         return vis

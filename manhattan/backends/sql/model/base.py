@@ -10,8 +10,10 @@ class _Base(object):
     def find_or_create(cls, **kw):
         try:
             rec = meta.Session.query(cls).filter_by(**kw).one()
+            rec.is_new = False
         except NoResultFound:
             rec = cls(**kw)
+            rec.is_new = True
             meta.Session.add(rec)
         return rec
 

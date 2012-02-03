@@ -20,6 +20,7 @@ test_clickstream = [
     ('page', 'a', '/cheese/gouda'),
     ('page', 'a', '/cheese'),
     ('page', 'b', '/cheese'),
+    ('split', 'b', 'red checkout form'),
     ('page', 'b', '/checkout/complete'),
     ('goal', 'b', 'completed checkout'),
     ('page', 'c', '/'),

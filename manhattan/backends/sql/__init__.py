@@ -1,25 +1,36 @@
+import logging
+
 from sqlalchemy import create_engine
 
 from manhattan.backends.base import Backend
 
 from . import model
-from .model import meta
+from .model import meta, timeseries
+
+log = logging.getLogger(__name__)
 
 
 class SQLBackend(Backend):
 
     def __init__(self, sqlalchemy_url):
-        self.engine = create_engine(sqlalchemy_url)
+        self.engine = create_engine(sqlalchemy_url, echo=False)
         model.init_model(self.engine)
         meta.metadata.create_all()
 
+    def parse_timestamp(self, ts):
+        return int(float(ts))
+
     def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
                     referer):
+        ts = self.parse_timestamp(ts)
+        log.error('first')
         vis = model.Visitor.find_or_create(visitor_id=vid,
                                            timestamp=ts)
-        vis.timestamp = ts
 
+        log.error('second')
         self.record_goal(ts, vid, site_id, 'viewed page', None, None, None)
+
+        log.error('done')
 
         req = model.Request(visitor=vis,
                             timestamp=ts,
@@ -31,49 +42,75 @@ class SQLBackend(Backend):
         meta.Session.commit()
 
     def record_pixel(self, ts, vid, site_id):
+        ts = self.parse_timestamp(ts)
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         vis.bot = False
         meta.Session.commit()
 
     def record_goal(self, ts, vid, site_id, name,
                     value, value_type, value_format):
+        ts = self.parse_timestamp(ts)
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         goal = model.Goal.find_or_create(name=name,
                                          value_type=None,
                                          value_format=None)
-        model.Conversion.find_or_create(visitor=vis, goal=goal)
+        conv = model.Conversion.find_or_create(visitor=vis, goal=goal)
+
+        meta.Session.commit()
+
+        if conv.is_new:
+            timeseries.record_conversion(goal.id, ts)
 
         variants = meta.Session.query(model.Variant).\
                 join(model.Variant.impressions).\
                 filter_by(visitor=vis)
 
         for variant in variants:
-            model.VariantConversion.find_or_create(goal=goal,
-                                                   visitor=vis,
-                                                   variant=variant)
+            vc = model.VariantConversion.find_or_create(goal=goal,
+                                                        visitor=vis,
+                                                        variant=variant)
+            if vc.is_new:
+                timeseries.record_variant_conversion(goal_id=goal.id,
+                                                     variant_id=variant.id,
+                                                     timestamp=ts)
 
         meta.Session.commit()
 
     def record_split(self, ts, vid, site_id, name, selected):
+        ts = self.parse_timestamp(ts)
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         test = model.Test.find_or_create(name=name)
         variant = model.Variant.find_or_create(test=test, name=selected)
-        model.Impression.find_or_create(visitor=vis, variant=variant)
+        impr = model.Impression.find_or_create(visitor=vis, variant=variant)
+
         meta.Session.commit()
+
+        if impr.is_new:
+            timeseries.record_impression(variant_id=variant.id,
+                                         timestamp=ts)
+
+        meta.Session.commit()
+
+    def get_goal(self, name):
+        return meta.Session.query(model.Goal).filter_by(name=name).one()
+
+    def get_variant(self, variant):
+        test_name, pop_name = variant
+        test = meta.Session.query(model.Test).\
+                filter_by(name=test_name).one()
+
+        return meta.Session.query(model.Variant).\
+                filter_by(test=test, name=pop_name).one()
+
 
     def _sessions_q(self, goal=None, variant=None):
         q = meta.Session.query(model.Visitor.visitor_id).filter_by(bot=False)
 
         if goal:
-            goal = meta.Session.query(model.Goal).filter_by(name=goal).one()
+            goal = self.get_goal(goal)
 
         if variant:
-            test_name, pop_name = variant
-            test = meta.Session.query(model.Test).\
-                    filter_by(name=test_name).one()
-
-            variant = meta.Session.query(model.Variant).\
-                    filter_by(test=test, name=pop_name).one()
+            variant = self.get_variant(variant)
 
         if goal and variant:
             # Use VariantConversion table.
@@ -98,8 +135,12 @@ class SQLBackend(Backend):
         return q
 
     def count(self, goal, variant=None):
-        q = self._sessions_q(goal, variant)
-        return q.count()
+        goal_id = self.get_goal(goal).id
+        if variant:
+            variant_id = self.get_variant(variant).id
+        else:
+            variant_id = None
+        return timeseries.count(goal_id=goal_id, variant_id=variant_id)
 
     def get_sessions(self, goal=None, variant=None):
         q = self._sessions_q(goal, variant)

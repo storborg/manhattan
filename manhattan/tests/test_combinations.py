@@ -1,5 +1,8 @@
+import logging
+
 from unittest import TestCase
 
+from sqlalchemy import MetaData, create_engine
 from webob import Request
 import zmq
 
@@ -14,6 +17,17 @@ from manhattan.backends.memory import MemoryBackend
 from manhattan.backends.sql import SQLBackend
 
 from . import data
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+
+
+def drop_existing_tables(engine):
+    "Drop all tables, including tables that aren't defined in metadata."
+    temp_metadata = MetaData()
+    temp_metadata.reflect(bind=engine)
+    for table in reversed(temp_metadata.sorted_tables):
+        table.drop(bind=engine)
 
 
 class TestCombinations(TestCase):
@@ -92,5 +106,7 @@ class TestCombinations(TestCase):
     def test_sql_backend(self):
         log = MemoryLog()
         self._run_clickstream(log)
-        backend = SQLBackend('sqlite:///')
+        url = 'mysql://manhattan:quux@localhost/manhattan_test'
+        drop_existing_tables(create_engine(url))
+        backend = SQLBackend(url)
         self._check_clickstream(log, backend)
