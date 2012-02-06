@@ -1,5 +1,7 @@
 import logging
 
+import os
+import glob
 from unittest import TestCase
 
 from sqlalchemy import MetaData, create_engine
@@ -12,6 +14,7 @@ from manhattan.worker import Worker
 from manhattan.log.memory import MemoryLog
 from manhattan.log.gz import GZEventLog
 from manhattan.log.zeromq import ZeroMQLog
+from manhattan.log.timerotating import TimeRotatingLog
 
 from manhattan.backends.memory import MemoryBackend
 from manhattan.backends.sql import SQLBackend
@@ -110,3 +113,17 @@ class TestCombinations(TestCase):
         drop_existing_tables(create_engine(url))
         backend = SQLBackend(url)
         self._check_clickstream(log, backend)
+
+    def test_timerotating_log(self):
+        path = '/tmp/manhattan-test-timelog'
+        fnames = glob.glob('%s.[0-9]*' % path)
+        for fname in fnames:
+            os.remove(fname)
+
+        log = TimeRotatingLog(path)
+        self._run_clickstream(log)
+
+        log.f.flush()
+
+        log2 = TimeRotatingLog(path)
+        self._check_clickstream(log2, MemoryBackend())

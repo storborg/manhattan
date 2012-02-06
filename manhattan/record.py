@@ -4,7 +4,7 @@ class Record(object):
 
     def __init__(self, **kwargs):
         for field in self.base_fields + self.fields:
-            setattr(self, field, kwargs[field])
+            setattr(self, field, kwargs.get(field, ''))
 
     def to_list(self):
         return [self.key] + [getattr(self, field) for field in
