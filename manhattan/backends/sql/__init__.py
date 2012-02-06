@@ -51,6 +51,8 @@ class SQLBackend(Backend):
                               name=rec.test_name,
                               selected=rec.selected)
 
+        meta.Session.commit()
+
     def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
                     referer):
         ts = self.parse_timestamp(ts)
@@ -69,14 +71,12 @@ class SQLBackend(Backend):
                             ip=ip,
                             method=method)
         meta.Session.add(req)
-
-        meta.Session.commit()
+        meta.Session.flush()
 
     def record_pixel(self, ts, vid, site_id):
         ts = self.parse_timestamp(ts)
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         vis.bot = False
-        meta.Session.commit()
 
     def record_goal(self, ts, vid, site_id, name,
                     value, value_type, value_format):
@@ -86,8 +86,6 @@ class SQLBackend(Backend):
                                          value_type=None,
                                          value_format=None)
         conv = model.Conversion.find_or_create(visitor=vis, goal=goal)
-
-        meta.Session.commit()
 
         if conv.is_new:
             timeseries.record_conversion(goal.id, ts)
@@ -105,8 +103,6 @@ class SQLBackend(Backend):
                                                      variant_id=variant.id,
                                                      timestamp=ts)
 
-        meta.Session.commit()
-
     def record_split(self, ts, vid, site_id, name, selected):
         ts = self.parse_timestamp(ts)
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
@@ -114,13 +110,9 @@ class SQLBackend(Backend):
         variant = model.Variant.find_or_create(test=test, name=selected)
         impr = model.Impression.find_or_create(visitor=vis, variant=variant)
 
-        meta.Session.commit()
-
         if impr.is_new:
             timeseries.record_impression(variant_id=variant.id,
                                          timestamp=ts)
-
-        meta.Session.commit()
 
     def get_goal(self, name):
         return meta.Session.query(model.Goal).filter_by(name=name).one()

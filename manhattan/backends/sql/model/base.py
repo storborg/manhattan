@@ -15,6 +15,7 @@ class _Base(object):
             rec = cls(**kw)
             rec.is_new = True
             meta.Session.add(rec)
+            meta.Session.flush()
         return rec
 
 

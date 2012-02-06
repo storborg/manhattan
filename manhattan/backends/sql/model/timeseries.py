@@ -92,13 +92,14 @@ def increment(tables, timestamp, goal_id=None, variant_id=None):
                 kw['goal_id'] = goal_id
             if variant_id:
                 kw['variant_id'] = variant_id
-            t.insert().values(count=1,
-                              start_timestamp=start,
-                              **kw).execute()
+            q = t.insert().values(count=1,
+                                  start_timestamp=start,
+                                  **kw)
         else:
             q = t.update().values(count=t.c.count + 1)
             q = filter_q(t, q, start, goal_id, variant_id)
-            q.execute()
+
+        meta.Session.execute(q)
 
 
 def record_conversion(goal_id, timestamp):
