@@ -102,7 +102,6 @@ class SQLBackend(Backend):
         return meta.Session.query(model.Variant).\
                 filter_by(test=test, name=pop_name).one()
 
-
     def _sessions_q(self, goal=None, variant=None):
         q = meta.Session.query(model.Visitor.visitor_id).filter_by(bot=False)
 
