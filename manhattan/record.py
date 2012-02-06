@@ -1,3 +1,6 @@
+log_version = 1
+
+
 class Record(object):
     base_fields = ('timestamp', 'vid', 'site_id')
     fields = ()
@@ -7,14 +10,21 @@ class Record(object):
             setattr(self, field, kwargs.get(field, ''))
 
     def to_list(self):
-        return [self.key] + [getattr(self, field) for field in
-                             self.base_fields + self.fields]
+        return ([str(log_version), self.key] +
+                [getattr(self, field) for field in
+                 self.base_fields + self.fields])
 
     @staticmethod
     def from_list(vals):
-        cls = _record_types[vals[0]]
+        version = vals[0]
+        record_type = vals[1]
+        rest = vals[2:]
+
+        assert int(version) == log_version
+
+        cls = _record_types[record_type]
         kwargs = {field: val for field, val
-                  in zip(cls.base_fields + cls.fields, vals[1:])}
+                  in zip(cls.base_fields + cls.fields, rest)}
         return cls(**kwargs)
 
 
