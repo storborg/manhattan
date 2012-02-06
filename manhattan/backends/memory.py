@@ -13,24 +13,25 @@ class MemoryBackend(Backend):
         self.populations = defaultdict(set)
         self.all = set()
 
-    def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
-                    referer):
-        ts = float(ts)
-        self.record_goal(ts, vid, site_id, 'viewed page')
-        self.visitors[vid] = dict(ip=ip, user_agent=user_agent)
-        self.requests[vid].append((int(ts), url, ip, method))
-        self.all.add(vid)
+    def handle(self, rec):
+        assert rec.key in ('page', 'pixel', 'goal', 'split')
 
-    def record_pixel(self, ts, vid, site_id):
-        self.nonbot.add(vid)
+        if rec.key == 'page':
+            ts = int(float(rec.timestamp))
+            self.goals['viewed page'].add(rec.vid)
 
-    def record_goal(self, ts, vid, site_id, name, value=None, value_type=None,
-                    value_format=None):
-        ts = float(ts)
-        self.goals[name].add(vid)
+            self.visitors[rec.vid] = dict(ip=rec.ip, user_agent=rec.user_agent)
+            self.requests[rec.vid].append((ts, rec.url, rec.ip, rec.method))
+            self.all.add(rec.vid)
 
-    def record_split(self, ts, vid, site_id, name, selected):
-        self.populations[(name, selected)].add(vid)
+        elif rec.key == 'pixel':
+            self.nonbot.add(rec.vid)
+
+        elif rec.key == 'goal':
+            self.goals[rec.name].add(rec.vid)
+
+        else:  # split
+            self.populations[(rec.test_name, rec.selected)].add(rec.vid)
 
     def count(self, goal, variant=None):
         """

@@ -20,6 +20,37 @@ class SQLBackend(Backend):
     def parse_timestamp(self, ts):
         return int(float(ts))
 
+    def handle(self, rec):
+        assert rec.key in ('page', 'pixel', 'goal', 'split')
+
+        if rec.key == 'page':
+            self.record_page(ts=rec.timestamp,
+                             vid=rec.vid,
+                             site_id=rec.site_id,
+                             ip=rec.ip,
+                             method=rec.method,
+                             url=rec.url,
+                             user_agent=rec.user_agent,
+                             referer=rec.referer)
+        elif rec.key == 'pixel':
+            self.record_pixel(ts=rec.timestamp,
+                              vid=rec.vid,
+                              site_id=rec.site_id)
+        elif rec.key == 'goal':
+            self.record_goal(ts=rec.timestamp,
+                             vid=rec.vid,
+                             site_id=rec.site_id,
+                             name=rec.name,
+                             value=rec.value,
+                             value_type=rec.value_type,
+                             value_format=rec.value_format)
+        else:  # split
+            self.record_split(ts=rec.timestamp,
+                              vid=rec.vid,
+                              site_id=rec.site_id,
+                              name=rec.test_name,
+                              selected=rec.selected)
+
     def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
                     referer):
         ts = self.parse_timestamp(ts)

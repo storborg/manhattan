@@ -6,6 +6,7 @@ from webob import Request, Response
 from webtest import TestApp
 
 from manhattan.middleware import ManhattanMiddleware
+from manhattan.record import Record
 from manhattan.log.memory import MemoryLog
 
 
@@ -55,56 +56,54 @@ class TestMiddleware(TestCase):
         app.reset()
         log.purge()
 
+    def process(self):
+        records = list(log.process())
+        self.assertEqual(len(records), 1)
+        record = Record.from_list(records[0])
+        return record
+
     def test_request(self):
         resp = app.get('/')
 
-        records = list(log.process())
-        self.assertEqual(len(records), 1)
-        record = records[0]
-        self.assertEqual(record[0], 'page')
-        self.assertEqual(record[3], '3')  # site_id = 3
+        record = self.process()
+        self.assertEqual(record.key, 'page')
+        self.assertEqual(record.site_id, '3')
 
         m = re.search('<img src="(.+)" alt="" />', resp.body)
         pixel_path = m.group(1)
         resp = app.get(pixel_path)
         self.assertEqual(resp.content_type, 'image/gif')
 
-        records = list(log.process())
-        self.assertEqual(len(records), 1)
-        record = records[0]
-        self.assertEqual(record[0], 'pixel')
-        self.assertEqual(record[3], '3')
+        record = self.process()
+        self.assertEqual(record.key, 'pixel')
+        self.assertEqual(record.site_id, '3')
 
         resp = app.get('/foo')
 
-        records = list(log.process())
-        self.assertEqual(len(records), 1)
-        record = records[0]
-        self.assertEqual(record[0], 'page')
-        self.assertTrue(record[6].endswith('/foo'))
-        self.assertEqual(record[3], '3')
+        record = self.process()
+        self.assertEqual(record.key, 'page')
+        self.assertTrue(record.url.endswith('/foo'))
+        self.assertEqual(record.site_id, '3')
 
     def test_host_map(self):
         resp = app.get('/hello', extra_environ={'HTTP_HOST': 'example.com'})
         self.assertEqual(resp.content_type, 'text/html')
-        records = list(log.process())
-        self.assertEqual(len(records), 1)
-        record = records[0]
-        self.assertEqual(record[0], 'page')
-        self.assertTrue(record[6].endswith('/hello'))
-        self.assertEqual(record[3], '5')
+
+        record = self.process()
+        self.assertEqual(record.key, 'page')
+        self.assertTrue(record.url.endswith('/hello'))
+        self.assertEqual(record.site_id, '5')
 
     def test_unknown_host(self):
         resp = app.get('/somepage',
                        extra_environ={'HTTP_HOST':
                                       'supercalifragilicious.com'})
         self.assertEqual(resp.content_type, 'text/html')
-        records = list(log.process())
-        self.assertEqual(len(records), 1)
-        record = records[0]
-        self.assertEqual(record[0], 'page')
-        self.assertTrue(record[6].endswith('/somepage'))
-        self.assertEqual(record[3], '0')
+
+        record = self.process()
+        self.assertEqual(record.key, 'page')
+        self.assertTrue(record.url.endswith('/somepage'))
+        self.assertEqual(record.site_id, '0')
 
     def test_pixel_req(self):
         resp = app.get('/vpixel.gif')
