@@ -36,14 +36,16 @@ class TimeRotatingLogTest(TestCase):
     def test_multiple_logs(self):
         log_w = TimeRotatingLog('/tmp/manhattan-test-trl-mult')
 
-        def fake_name(self, timestamp):
-            return '%s.001' % self.path
-        log_w.log_name_for = types.MethodType(fake_name, log_w, TimeRotatingLog)
+        def set_fake_name(log, index):
+            def fake_name(self, timestamp):
+                return '%s.%s' % (self.path, index)
+            log.log_name_for = types.MethodType(fake_name, log,
+                                                TimeRotatingLog)
+
+        set_fake_name(log_w, '001')
         log_w.write(PageRecord(url='/foo').to_list())
 
-        def fake_name(self, timestamp):
-            return '%s.004' % self.path
-        log_w.log_name_for = types.MethodType(fake_name, log_w, TimeRotatingLog)
+        set_fake_name(log_w, '004')
         log_w.write(PageRecord(url='/bar').to_list())
 
         log_w.f.flush()
