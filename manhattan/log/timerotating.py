@@ -6,6 +6,7 @@ from .text import TextLog
 
 
 class TimeRotatingLog(TextLog):
+    sleep_delay = 0.5
 
     def __init__(self, path):
         self.path = path
@@ -30,19 +31,59 @@ class TimeRotatingLog(TextLog):
         self.f.write('\n')
         flock(self.f, LOCK_UN)
 
-    def process(self):
+    def live_iter_glob(self):
         """
-        For now this just supports a very simple 'process all the written logs'
-        kind of behavior. Ultimately it should tail -f the matching glob and
-        stay alive, as well as support processing from a certain timestamp or
-        log file.
+        Yield an infinite iterator of the available log file names. If there
+        are no new files to yield, just re-yields the most recent one.
         """
-        fnames = glob.glob('%s.[0-9]*' % self.path)
+        consumed = set()
+        while True:
+            fnames = glob.glob('%s.[0-9]*' % self.path)
+            fresh_files = False
+            for fn in fnames:
+                if fn not in consumed:
+                    fresh_files = True
+                    consumed.add(fn)
+                    yield fn
+            if not fresh_files:
+                if fnames:
+                    yield fnames[-1]
+                else:
+                    time.sleep(self.sleep_delay)
+
+    def tail_glob(self):
+        """
+        Return an iterator over all the matching log files, yielding a line at
+        a time. At the end of all available files, poll the last file for new
+        lines and look for new files. If a new file is created, abandon the
+        previous file and follow that one.
+        """
+        fnames = self.live_iter_glob()
+        this_file = fnames.next()
+        f = open(this_file, 'rb')
+
+        while True:
+            start = f.tell()
+            line = f.readline()
+            if not line:
+                next_file = fnames.next()
+                if next_file != this_file:
+                    this_file = next_file
+                    f = open(this_file, 'rb')
+                else:
+                    if self.is_alive:
+                        time.sleep(self.sleep_delay)
+                        f.seek(start)
+                    else:
+                        break
+            else:
+                yield line
+
+    def process(self, stay_alive=False):
         records_processed = 0
 
-        for fname in fnames:
-            f = open(fname, 'rb')
+        self.is_alive = stay_alive
 
-            for line in f.readlines():
-                yield self.parse(line.strip())
-                records_processed += 1
+        for line in self.tail_glob():
+            yield self.parse(line.strip())
+            records_processed += 1
