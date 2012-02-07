@@ -70,12 +70,11 @@ class TimeRotatingLog(TextLog):
                 if next_file != this_file:
                     this_file = next_file
                     f = open(this_file, 'rb')
+                elif self.is_alive:
+                    time.sleep(self.sleep_delay)
+                    f.seek(start)
                 else:
-                    if self.is_alive:
-                        time.sleep(self.sleep_delay)
-                        f.seek(start)
-                    else:
-                        break
+                    break
             else:
                 yield line
 
