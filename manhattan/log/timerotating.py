@@ -39,6 +39,7 @@ class TimeRotatingLog(TextLog):
         last_consumed = None
         while True:
             fnames = glob.glob('%s.[0-9]*' % self.path)
+            fnames.sort()
             fresh_files = False
             for fn in fnames:
                 if fn > last_consumed:
