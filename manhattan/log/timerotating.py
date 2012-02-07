@@ -59,14 +59,14 @@ class TimeRotatingLog(TextLog):
         previous file and follow that one.
         """
         fnames = self.live_iter_glob()
-        this_file = fnames.next()
+        this_file = next(fnames)
         f = open(this_file, 'rb')
 
         while True:
             start = f.tell()
             line = f.readline()
             if not line:
-                next_file = fnames.next()
+                next_file = next(fnames)
                 if next_file != this_file:
                     this_file = next_file
                     f = open(this_file, 'rb')
