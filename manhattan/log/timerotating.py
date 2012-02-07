@@ -36,14 +36,14 @@ class TimeRotatingLog(TextLog):
         Yield an infinite iterator of the available log file names. If there
         are no new files to yield, just re-yields the most recent one.
         """
-        consumed = set()
+        last_consumed = None
         while True:
             fnames = glob.glob('%s.[0-9]*' % self.path)
             fresh_files = False
             for fn in fnames:
-                if fn not in consumed:
+                if fn > last_consumed:
                     fresh_files = True
-                    consumed.add(fn)
+                    last_consumed = fn
                     yield fn
             if not fresh_files:
                 if fnames:
