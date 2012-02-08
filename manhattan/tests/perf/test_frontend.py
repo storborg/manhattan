@@ -4,7 +4,6 @@ from webob import Request
 
 from manhattan.visitor import Visitor
 from manhattan.util import nonce
-from manhattan.log.gz import GZEventLog
 from manhattan.log.memory import MemoryLog
 from manhattan.log.zeromq import ZeroMQLog
 
@@ -46,8 +45,6 @@ def run_logger(log, num_requests=10000, goal_every=50, split_every=1):
 if __name__ == '__main__':
     print "Testing MemoryLog"
     run_logger(MemoryLog())
-    print "Testing GZEventLog"
-    run_logger(GZEventLog('/tmp/manhattan-perftest'))
     print "Testing ZeroMQLog"
     ctx = zmq.Context()
     read_log = ZeroMQLog(ctx, 'r', stay_alive=False)

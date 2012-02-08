@@ -12,7 +12,6 @@ from manhattan.visitor import Visitor
 from manhattan.worker import Worker
 
 from manhattan.log.memory import MemoryLog
-from manhattan.log.gz import GZEventLog
 from manhattan.log.zeromq import ZeroMQLog
 from manhattan.log.timerotating import TimeRotatingLog
 
@@ -90,13 +89,6 @@ class TestCombinations(TestCase):
         log = MemoryLog()
         self._run_clickstream(log)
         self._check_clickstream(log, MemoryBackend())
-
-    def test_gz_log(self):
-        log = GZEventLog('/tmp/manhattan-test-log')
-        self._run_clickstream(log)
-
-        log2 = GZEventLog('/tmp/manhattan-test-log')
-        self._check_clickstream(log2, MemoryBackend())
 
     def test_zeromq_log(self):
         ctx = zmq.Context()
