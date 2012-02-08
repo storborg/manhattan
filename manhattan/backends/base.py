@@ -2,14 +2,11 @@ class Backend(object):
     """
     Manhattan backend superclass.
 
-    A subclass should implement at least the following methods:
+    A subclass should implement at least the following method, where ``record``
+    is an instance of manhattan.record.Record.
 
-        record_page
+        def handle(self, record):
+            pass
 
-        record_pixel
-
-        record_goal
-
-        record_split
     """
     pass
