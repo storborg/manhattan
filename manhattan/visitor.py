@@ -1,11 +1,7 @@
-import logging
-
 import time
 
 from .util import choose_population
 from .record import PageRecord, PixelRecord, GoalRecord, SplitRecord
-
-log = logging.getLogger(__name__)
 
 
 # Goal Value Aggregation Types
@@ -57,7 +53,6 @@ class Visitor(object):
         :type request:
             webob.Request instance
         """
-        log.debug('page: %s %s', self.id, request.url)
         rec = PageRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
@@ -72,7 +67,6 @@ class Visitor(object):
         """
         Log a pixel view for this visitor.
         """
-        log.debug('pixel: %s', self.id)
         rec = PixelRecord(timestamp=self.timestamp(),
                           vid=self.id,
                           site_id=self.site_id)
@@ -99,7 +93,6 @@ class Visitor(object):
         :type value_format:
             NUMERIC, CURRENCY, or PERCENTAGE
         """
-        log.debug('goal: %s %s', self.id, name)
         rec = GoalRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
@@ -131,7 +124,6 @@ class Visitor(object):
         :returns:
             The population selected for the visitor.
         """
-        log.debug('split: %s %s', self.id, test_name)
         selected = choose_population(self.id + test_name, populations)
         rec = SplitRecord(timestamp=self.timestamp(),
                           vid=self.id,
