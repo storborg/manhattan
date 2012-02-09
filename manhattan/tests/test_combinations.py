@@ -108,7 +108,7 @@ class TestCombinations(TestCase):
         self._run_clickstream(log)
         url = 'mysql://manhattan:quux@localhost/manhattan_test'
         drop_existing_tables(create_engine(url))
-        backend = SQLBackend(url)
+        backend = SQLBackend(url, max_recent_visitors=1)
         self._check_clickstream(log, backend)
 
     def test_timerotating_log(self):

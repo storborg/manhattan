@@ -3,15 +3,16 @@ import logging
 from sqlalchemy import create_engine
 
 from . import model
-from .model import meta, timeseries
+from .model import meta, timeseries, recent
 
 log = logging.getLogger(__name__)
 
 
 class SQLBackend(object):
 
-    def __init__(self, sqlalchemy_url):
+    def __init__(self, sqlalchemy_url, max_recent_visitors=500):
         self.engine = create_engine(sqlalchemy_url, echo=False)
+        self.max_recent_visitors = max_recent_visitors
         model.init_model(self.engine)
         meta.metadata.create_all()
 
@@ -69,6 +70,10 @@ class SQLBackend(object):
                             ip=ip,
                             method=method)
         meta.Session.add(req)
+
+        if recent.record_recent(ts, vid, ip):
+            recent.truncate_recent(self.max_recent_visitors)
+
         meta.Session.flush()
 
     def record_pixel(self, ts, vid, site_id):
