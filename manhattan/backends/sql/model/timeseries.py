@@ -1,13 +1,15 @@
-import time
-from datetime import datetime, timedelta
-
 from sqlalchemy import Table, Column, ForeignKey, types
 from sqlalchemy.sql import select, func
 
 from . import meta
 
 
-granularities = ('all', 'month', 'week', 'day', 'hour')
+granularities = (
+    'all',
+    604800,   # 1 week
+    86400,    # 1 day
+    3600,     # 1 hour
+)
 
 
 conversion_tables = {}
@@ -51,23 +53,11 @@ def bucket_for_timestamp(granularity, timestamp):
     Given a timestamp and granularity, return the start_timestamp corresponding
     to the bucket containing the given timestamp.
     """
-    dt = datetime.fromtimestamp(timestamp)
+    if granularity not in granularities:
+        raise ValueError('invalid granularity: %r' % granularity)
     if granularity == 'all':
         return 0
-
-    new = datetime(year=dt.year, month=dt.month, day=dt.day)
-    if granularity == 'month':
-        new = new.replace(day=1)
-    elif granularity == 'week':
-        new = new - timedelta(days=dt.weekday())
-    elif granularity == 'day':
-        pass
-    elif granularity == 'hour':
-        new = new.replace(day=dt.day, hour=dt.hour)
-    else:
-        raise ValueError('invalid granularity %r' % granularity)
-
-    return int(time.mktime(new.timetuple()))
+    return timestamp - (timestamp % granularity)
 
 
 def filter_q(t, q, start, goal_id=None, variant_id=None):

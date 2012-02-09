@@ -61,13 +61,12 @@ class TestTimeSeries(TestCase):
 
     def test_bucket_for_invalid_granularity(self):
         with self.assertRaises(ValueError):
-            timeseries.bucket_for_timestamp('picoseconds', 1234)
+            timeseries.bucket_for_timestamp(1200, 1234)
 
     def test_bucket_for_timestamp(self):
         ts = 1327899798
         for gg, desired in  [('all', 0),
-                             ('month', 1325404800),
-                             ('week', 1327305600),
-                             ('day', 1327824000),
-                             ('hour', 1327899600)]:
+                             (604800, 1327536000),
+                             (86400, 1327881600),
+                             (3600, 1327899600)]:
             self.assertEqual(timeseries.bucket_for_timestamp(gg, ts), desired)
