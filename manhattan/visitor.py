@@ -93,6 +93,7 @@ class Visitor(object):
         :type value_format:
             NUMERIC, CURRENCY, or PERCENTAGE
         """
+        value = value and str(value)
         rec = GoalRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,

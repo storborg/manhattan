@@ -24,6 +24,7 @@ for granularity in granularities:
                         primary_key=True),
                  Column('start_timestamp', types.Integer, primary_key=True),
                  Column('count', types.Integer, nullable=False, default=0),
+                 Column('value', types.Numeric(10, 2), nullable=True),
                  mysql_engine='InnoDB')
     conversion_tables[granularity] = conv
 
@@ -44,6 +45,7 @@ for granularity in granularities:
                         primary_key=True),
                  Column('start_timestamp', types.Integer, primary_key=True),
                  Column('count', types.Integer, nullable=False, default=0),
+                 Column('value', types.Numeric(10, 2), nullable=True),
                  mysql_engine='InnoDB')
     variant_conversion_tables[granularity] = varc
 
@@ -69,7 +71,7 @@ def filter_q(t, q, start, goal_id=None, variant_id=None):
     return q
 
 
-def increment(tables, timestamp, goal_id=None, variant_id=None):
+def increment(tables, timestamp, goal_id=None, variant_id=None, value=None):
     for granularity in granularities:
         start = bucket_for_timestamp(granularity, timestamp)
         t = tables[granularity]
@@ -82,6 +84,8 @@ def increment(tables, timestamp, goal_id=None, variant_id=None):
                 kw['goal_id'] = goal_id
             if variant_id:
                 kw['variant_id'] = variant_id
+            if value:
+                kw['value'] = value
             q = t.insert().values(count=1,
                                   start_timestamp=start,
                                   **kw)
@@ -92,17 +96,17 @@ def increment(tables, timestamp, goal_id=None, variant_id=None):
         meta.Session.execute(q)
 
 
-def record_conversion(goal_id, timestamp):
-    increment(conversion_tables, timestamp, goal_id=goal_id)
+def record_conversion(goal_id, timestamp, value):
+    increment(conversion_tables, timestamp, goal_id=goal_id, value=value)
 
 
 def record_impression(variant_id, timestamp):
     increment(impression_tables, timestamp, variant_id=variant_id)
 
 
-def record_variant_conversion(variant_id, goal_id, timestamp):
+def record_variant_conversion(variant_id, goal_id, timestamp, value):
     increment(variant_conversion_tables, timestamp,
-              goal_id=goal_id, variant_id=variant_id)
+              goal_id=goal_id, variant_id=variant_id, value=value)
 
 
 def count_at_granularity(tables, granularity, goal_id, variant_id=None):

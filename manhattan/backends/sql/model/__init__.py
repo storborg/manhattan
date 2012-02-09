@@ -72,6 +72,7 @@ class Conversion(Base):
     goal_id = Column(None, ForeignKey('goals.id'), primary_key=True)
     visitor_id = Column(None, ForeignKey('visitors.visitor_id'),
                         primary_key=True)
+    value = Column(types.Numeric(10, 2), nullable=True)
     goal = orm.relationship('Goal')
     visitor = orm.relationship('Visitor')
 

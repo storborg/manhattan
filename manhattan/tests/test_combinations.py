@@ -8,6 +8,7 @@ from sqlalchemy import MetaData, create_engine
 from webob import Request
 import zmq
 
+from manhattan import visitor
 from manhattan.visitor import Visitor
 from manhattan.worker import Worker
 
@@ -50,7 +51,11 @@ class TestCombinations(TestCase):
             elif cmd == 'pixel':
                 v.pixel()
             elif cmd == 'goal':
-                v.goal(args[0])
+                value = args[1]
+                v.goal(args[0],
+                       value=value,
+                       value_type=visitor.SUM if value else None,
+                       value_format=visitor.CURRENCY if value else None)
             elif cmd == 'split':
                 v.split(args[0])
 

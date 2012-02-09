@@ -81,14 +81,29 @@ class SQLBackend(Backend):
     def record_goal(self, ts, vid, site_id, name,
                     value, value_type, value_format):
         ts = self.parse_timestamp(ts)
+
+        value = float(value) if value else None
+
         vis = model.Visitor.find_or_create(visitor_id=vid, timestamp=ts)
         goal = model.Goal.find_or_create(name=name,
-                                         value_type=None,
-                                         value_format=None)
-        conv = model.Conversion.find_or_create(visitor=vis, goal=goal)
+                                         value_type=value_type,
+                                         value_format=value_format)
+
+        assert goal.value_type == value_type, (
+            "can't change value type from %r to %r" %
+            (goal.value_type, value_type))
+        assert goal.value_format == value_format, (
+            "can't change value format from %r to %r" %
+            (goal.value_format, value_format))
+
+        conv = model.Conversion.find_or_create(visitor=vis,
+                                               goal=goal,
+                                               value=value)
 
         if conv.is_new:
-            timeseries.record_conversion(goal.id, ts)
+            timeseries.record_conversion(goal_id=goal.id,
+                                         timestamp=ts,
+                                         value=value)
 
         variants = meta.Session.query(model.Variant).\
                 join(model.Variant.impressions).\
@@ -101,7 +116,8 @@ class SQLBackend(Backend):
             if vc.is_new:
                 timeseries.record_variant_conversion(goal_id=goal.id,
                                                      variant_id=variant.id,
-                                                     timestamp=ts)
+                                                     timestamp=ts,
+                                                     value=value)
 
     def record_split(self, ts, vid, site_id, name, selected):
         ts = self.parse_timestamp(ts)
