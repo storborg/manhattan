@@ -10,8 +10,9 @@ log = logging.getLogger(__name__)
 
 class SQLBackend(object):
 
-    def __init__(self, sqlalchemy_url, max_recent_visitors=500):
-        self.engine = create_engine(sqlalchemy_url, echo=False)
+    def __init__(self, sqlalchemy_url, pool_recycle=3600,
+                 max_recent_visitors=500):
+        self.engine = create_engine(sqlalchemy_url, pool_recycle=pool_recycle)
         self.max_recent_visitors = max_recent_visitors
         model.init_model(self.engine)
         meta.metadata.create_all()
