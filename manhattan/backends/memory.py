@@ -1,9 +1,7 @@
 from collections import defaultdict
 
-from .base import Backend
 
-
-class MemoryBackend(Backend):
+class MemoryBackend(object):
 
     def __init__(self):
         self.requests = defaultdict(list)

@@ -2,15 +2,13 @@ import logging
 
 from sqlalchemy import create_engine
 
-from manhattan.backends.base import Backend
-
 from . import model
 from .model import meta, timeseries
 
 log = logging.getLogger(__name__)
 
 
-class SQLBackend(Backend):
+class SQLBackend(object):
 
     def __init__(self, sqlalchemy_url):
         self.engine = create_engine(sqlalchemy_url, echo=False)
