@@ -29,6 +29,7 @@ class TimeRotatingLog(TextLog):
         flock(self.f, LOCK_EX)
         self.f.write(record)
         self.f.write('\n')
+        self.f.flush()
         flock(self.f, LOCK_UN)
 
     def live_iter_glob(self):
