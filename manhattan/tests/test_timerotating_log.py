@@ -124,6 +124,12 @@ class TimeRotatingLogTest(TestCase):
         finally:
             log_r.is_alive = False
 
+    def test_stay_alive_nofiles(self):
+        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive-none')
+        log_r.sleep_delay = 0.001
+        consumed, consumer = make_thread_consumer(log_r)
+        log_r.is_alive = False
+
     def test_unicode_names(self):
         log_w = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
         goal_name = u'Goo\xf6aa\xe1llll!!!'

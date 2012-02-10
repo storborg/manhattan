@@ -49,8 +49,10 @@ class TimeRotatingLog(TextLog):
             if not fresh_files:
                 if fnames:
                     yield fnames[-1]
-                else:
+                elif self.is_alive:
                     time.sleep(self.sleep_delay)
+                else:
+                    break
 
     def tail_glob(self):
         """
