@@ -1,11 +1,7 @@
-import logging
-
 from sqlalchemy import create_engine
 
 from . import model
 from .model import meta, timeseries, recent
-
-log = logging.getLogger(__name__)
 
 
 class SQLBackend(object):
@@ -56,14 +52,10 @@ class SQLBackend(object):
     def record_page(self, ts, vid, site_id, ip, method, url, user_agent,
                     referer):
         ts = self.parse_timestamp(ts)
-        log.error('first')
         vis = model.Visitor.find_or_create(visitor_id=vid,
                                            timestamp=ts)
 
-        log.error('second')
         self.record_goal(ts, vid, site_id, 'viewed page', None, None, None)
-
-        log.error('done')
 
         req = model.Request(visitor=vis,
                             timestamp=ts,
