@@ -5,8 +5,16 @@ import glob
 from unittest import TestCase
 
 from sqlalchemy import MetaData, create_engine
+from sqlalchemy.exc import SAWarning
 from webob import Request
 import zmq
+
+import warnings
+# Filter out pysqlite Decimal loss of precision warning.
+warnings.filterwarnings('ignore',
+                        '.*pysqlite does \*not\* support Decimal',
+                        SAWarning,
+                        'sqlalchemy.types')
 
 from manhattan import visitor
 from manhattan.visitor import Visitor
@@ -106,7 +114,7 @@ class TestCombinations(TestCase):
     def test_sql_backend(self):
         log = MemoryLog()
         self._run_clickstream(log)
-        url = 'mysql://manhattan:quux@localhost/manhattan_test'
+        url = 'sqlite:///'
         drop_existing_tables(create_engine(url))
         backend = SQLBackend(url, max_recent_visitors=1)
         self._check_clickstream(log, backend)
