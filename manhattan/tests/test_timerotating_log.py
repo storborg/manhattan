@@ -6,7 +6,7 @@ import time
 from unittest import TestCase
 from threading import Thread
 
-from manhattan.record import PageRecord, Record
+from manhattan.record import Record, PageRecord, GoalRecord
 from manhattan.log.timerotating import TimeRotatingLog
 
 
@@ -35,6 +35,7 @@ class TimeRotatingLogTest(TestCase):
         # Flush any old log files.
         for path in ('/tmp/manhattan-test-trl-basic',
                      '/tmp/manhattan-test-trl-mult',
+                     '/tmp/manhattan-test-trl-unicode',
                      '/tmp/manhattan-test-trl-stayalive',
                      '/tmp/manhattan-test-trl-stayalive-mult'):
             for fn in glob.glob('%s.[0-9]*' % path):
@@ -122,3 +123,20 @@ class TimeRotatingLogTest(TestCase):
             self.assertEqual(consumed[1].url, '/herp')
         finally:
             log_r.is_alive = False
+
+    def test_unicode_names(self):
+        log_w = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
+        goal_name = u'Goo\xf6aa\xe1llll!!!'
+        rec = GoalRecord(name=goal_name,
+                         value='',
+                         value_type='',
+                         value_format='')
+        log_w.write(rec.to_list())
+
+        log_w.f.flush()
+
+        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
+        records = list(log_r.process(stay_alive=False))
+        self.assertEqual(len(records), 1)
+        rec = Record.from_list(records[0])
+        self.assertEqual(rec.name, goal_name)
