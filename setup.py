@@ -14,6 +14,8 @@ setup(name="manhattan",
       install_requires=[],
       license='PRIVATE',
       packages=['manhattan'],
+      entry_points=dict(console_scripts=[
+          'manhattan-worker=manhattan.worker:main']),
       test_suite='nose.collector',
       tests_require=['nose'],
       zip_safe=False)

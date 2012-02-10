@@ -2,6 +2,7 @@ import logging
 
 import os
 import glob
+import sys
 from unittest import TestCase
 
 from sqlalchemy import MetaData, create_engine
@@ -18,7 +19,7 @@ warnings.filterwarnings('ignore',
 
 from manhattan import visitor
 from manhattan.visitor import Visitor
-from manhattan.worker import Worker
+from manhattan.worker import Worker, main as worker_main
 
 from manhattan.log.memory import MemoryLog
 from manhattan.log.zeromq import ZeroMQLog
@@ -67,10 +68,7 @@ class TestCombinations(TestCase):
             elif cmd == 'split':
                 v.split(args[0])
 
-    def _check_clickstream(self, log, backend):
-        worker = Worker(log, backend)
-        worker.run()
-
+    def _check_backend_queries(self, backend):
         self.assertEqual(backend.count('add to cart'), 2)
         self.assertEqual(backend.count('began checkout'), 1)
         self.assertEqual(backend.count('viewed page'), 3)
@@ -97,6 +95,11 @@ class TestCombinations(TestCase):
 
         sessions = backend.get_sessions()
         self.assertEqual(len(sessions), 3)
+
+    def _check_clickstream(self, log, backend):
+        worker = Worker(log, backend)
+        worker.run()
+        self._check_backend_queries(backend)
 
     def test_memory_log(self):
         log = MemoryLog()
@@ -132,3 +135,24 @@ class TestCombinations(TestCase):
 
         log2 = TimeRotatingLog(path)
         self._check_clickstream(log2, MemoryBackend())
+
+    def test_sql_worker_executable(self):
+        path = '/tmp/manhattan-test-timelog'
+        fnames = glob.glob('%s.[0-9]*' % path)
+        for fname in fnames:
+            os.remove(fname)
+
+        log = TimeRotatingLog(path)
+        self._run_clickstream(log)
+
+        log.f.flush()
+
+        sqlite_url = 'sqlite:////tmp/manhattan-test.sqlite'
+
+        sys.argv = ['manhattan-worker',
+                    '--url=%s' % sqlite_url,
+                    '--path=%s' % path]
+
+        worker_main()
+
+        self._check_backend_queries(SQLBackend(sqlite_url))
