@@ -8,6 +8,7 @@ from .record import PageRecord, PixelRecord, GoalRecord, SplitRecord
 RATE = 'R'
 AVERAGE = 'A'
 SUM = 'S'
+PER = 'I'
 
 # Goal Value Measurement Formats
 NUMERIC = 'N'
@@ -19,6 +20,15 @@ class Visitor(object):
     """
     A handle to perform operations on the given visitor session.
     """
+    RATE = RATE
+    AVERAGE = AVERAGE
+    SUM = SUM
+    PER = PER
+
+    NUMERIC = NUMERIC
+    CURRENCY = CURRENCY
+    PERCENTAGE = PERCENTAGE
+
     def __init__(self, id, log, site_id=''):
         """
         Initialize the Visitor handle.
