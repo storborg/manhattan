@@ -1,5 +1,7 @@
 from sqlalchemy import create_engine
 
+from manhattan import visitor
+
 from . import model
 from .model import meta, timeseries, recent
 
@@ -168,13 +170,28 @@ class SQLBackend(object):
                     filter(model.Impression.variant == variant)
         return q
 
-    def count(self, goal, variant=None):
-        goal_id = self.get_goal(goal).id
+    def count(self, goal=None, variant=None):
+        if goal:
+            goal_id = self.get_goal(goal).id
+        else:
+            goal_id = None
+
         if variant:
             variant_id = self.get_variant(variant).id
         else:
             variant_id = None
+
         return timeseries.count(goal_id=goal_id, variant_id=variant_id)
+
+    def goal_value(self, goal, variant=None):
+        goal = self.get_goal(goal)
+        if variant:
+            variant_id = self.get_variant(variant).id
+        else:
+            variant_id = None
+        value = timeseries.total_value(goal_id=goal.id, variant_id=variant_id)
+        assert goal.value_type == visitor.SUM
+        return value
 
     def get_sessions(self, goal=None, variant=None):
         q = self._sessions_q(goal, variant)

@@ -92,7 +92,10 @@ def increment(tables, timestamp, goal_id=None, variant_id=None, value=None):
                                   start_timestamp=start,
                                   **kw)
         else:
-            q = t.update().values(count=t.c.count + 1)
+            kw = {}
+            if value:
+                kw['value'] = t.c.value + value
+            q = t.update().values(count=t.c.count + 1, **kw)
             q = filter_q(t, q, start, goal_id, variant_id)
 
         meta.Session.execute(q)
@@ -111,27 +114,42 @@ def record_variant_conversion(variant_id, goal_id, timestamp, value):
               goal_id=goal_id, variant_id=variant_id, value=value)
 
 
-def count_at_granularity(tables, granularity, goal_id, variant_id=None):
+def aggregate(col, goal_id=None, variant_id=None, start=None, end=None):
+    assert variant_id or goal_id, 'must specify variant_id or goal_id'
+
+    if variant_id and goal_id:
+        tables = variant_conversion_tables
+    elif variant_id:
+        tables = impression_tables
+    else:
+        tables = conversion_tables
+
+    granularity = choose_granularity(start, end)
+
     t = tables[granularity]
-    q = select([func.sum(t.c.count)])
+    col = getattr(t.c, col)
+    q = select([func.sum(col)])
 
-    q = q.where(t.c.goal_id == goal_id)
-
+    if goal_id:
+        q = q.where(t.c.goal_id == goal_id)
     if variant_id:
         q = q.where(t.c.variant_id == variant_id)
+
+    # TODO Add start/end filtering here.
 
     return q.scalar()
 
 
-def count(goal_id, variant_id=None, start=None, end=None):
-    if variant_id:
-        tables = variant_conversion_tables
-    else:
-        tables = conversion_tables
-
-    # FIXME Add support for time range filtering with the right granularity.
+def choose_granularity(start, end):
     assert not start and not end
-    granularity = 'all'
+    return 'all'
 
-    return count_at_granularity(tables, granularity,
-                                goal_id=goal_id, variant_id=variant_id)
+
+def count(goal_id=None, variant_id=None, start=None, end=None):
+    return aggregate('count', goal_id=goal_id, variant_id=variant_id,
+                     start=start, end=end)
+
+
+def total_value(goal_id, variant_id=None, start=None, end=None):
+    return aggregate('value', goal_id=goal_id, variant_id=variant_id,
+                     start=start, end=end)

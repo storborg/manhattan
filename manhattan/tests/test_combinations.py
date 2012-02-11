@@ -4,6 +4,7 @@ import os
 import glob
 import sys
 from unittest import TestCase
+from decimal import Decimal
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import SAWarning
@@ -91,9 +92,21 @@ class TestCombinations(TestCase):
         log = MemoryLog()
         data.run_clickstream(log)
         url = 'sqlite:///'
+        url = 'mysql://manhattan:quux@localhost/manhattan_test'
         drop_existing_tables(create_engine(url))
         backend = SQLBackend(url, max_recent_visitors=1)
         self._check_clickstream(log, backend)
+
+        revenue = backend.goal_value('completed checkout')
+        self.assertEqual(revenue, Decimal('108.19'))
+
+        revenue_nored = backend.goal_value(
+            'completed checkout',
+            variant=('red checkout form', 'False'))
+        self.assertEqual(revenue_nored, Decimal('31.78'))
+
+        noreds = backend.count(variant=('red checkout form', 'False'))
+        self.assertEqual(noreds, 1)
 
     def test_timerotating_log(self):
         path = '/tmp/manhattan-test-timelog'
