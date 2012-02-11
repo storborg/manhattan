@@ -7,7 +7,6 @@ from unittest import TestCase
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import SAWarning
-from webob import Request
 import zmq
 
 import warnings
@@ -17,8 +16,6 @@ warnings.filterwarnings('ignore',
                         SAWarning,
                         'sqlalchemy.types')
 
-from manhattan import visitor
-from manhattan.visitor import Visitor
 from manhattan.worker import Worker, main as worker_main
 
 from manhattan.log.memory import MemoryLog
@@ -44,37 +41,10 @@ def drop_existing_tables(engine):
 
 class TestCombinations(TestCase):
 
-    def _run_clickstream(self, log):
-        visitors = {}
-
-        def get_visitor(vid):
-            if vid not in visitors:
-                visitors[vid] = Visitor(vid, log)
-            return visitors[vid]
-
-        for action in data.test_clickstream:
-            cmd = action[0]
-            v = get_visitor(action[1])
-            args = action[2:]
-
-            if cmd == 'page':
-                req = Request.blank(args[0])
-                v.page(req)
-            elif cmd == 'pixel':
-                v.pixel()
-            elif cmd == 'goal':
-                value = args[1]
-                v.goal(args[0],
-                       value=value,
-                       value_type=visitor.SUM if value else None,
-                       value_format=visitor.CURRENCY if value else None)
-            elif cmd == 'split':
-                v.split(args[0])
-
     def _check_backend_queries(self, backend):
-        self.assertEqual(backend.count('add to cart'), 4)
-        self.assertEqual(backend.count('began checkout'), 3)
-        self.assertEqual(backend.count('viewed page'), 5)
+        self.assertEqual(backend.count('add to cart'), 5)
+        self.assertEqual(backend.count('began checkout'), 4)
+        self.assertEqual(backend.count('viewed page'), 6)
 
         sessions = backend.get_sessions(goal='add to cart')
         self.assertIn('a', sessions)
@@ -97,7 +67,7 @@ class TestCombinations(TestCase):
         self.assertEqual(num, 1)
 
         sessions = backend.get_sessions()
-        self.assertEqual(len(sessions), 5)
+        self.assertEqual(len(sessions), 6)
 
     def _check_clickstream(self, log, backend):
         worker = Worker(log, backend)
@@ -106,7 +76,7 @@ class TestCombinations(TestCase):
 
     def test_memory_log(self):
         log = MemoryLog()
-        self._run_clickstream(log)
+        data.run_clickstream(log)
         self._check_clickstream(log, MemoryBackend())
 
     def test_zeromq_log(self):
@@ -114,12 +84,12 @@ class TestCombinations(TestCase):
         log_r = ZeroMQLog(ctx, 'r', stay_alive=False, endpoints='tcp://*:8128')
         log_w = ZeroMQLog(ctx, 'w')
 
-        self._run_clickstream(log_w)
+        data.run_clickstream(log_w)
         self._check_clickstream(log_r, MemoryBackend())
 
     def test_sql_backend(self):
         log = MemoryLog()
-        self._run_clickstream(log)
+        data.run_clickstream(log)
         url = 'sqlite:///'
         drop_existing_tables(create_engine(url))
         backend = SQLBackend(url, max_recent_visitors=1)
@@ -132,7 +102,7 @@ class TestCombinations(TestCase):
             os.remove(fname)
 
         log = TimeRotatingLog(path)
-        self._run_clickstream(log)
+        data.run_clickstream(log)
 
         log.f.flush()
 
@@ -146,7 +116,7 @@ class TestCombinations(TestCase):
             os.remove(fname)
 
         log = TimeRotatingLog(path)
-        self._run_clickstream(log)
+        data.run_clickstream(log)
 
         log.f.flush()
 
