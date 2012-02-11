@@ -46,12 +46,15 @@ class TestCombinations(TestCase):
 
     def _run_clickstream(self, log):
         visitors = {}
-        for vid in ('a', 'b', 'c'):
-            visitors[vid] = Visitor(vid, log)
+
+        def get_visitor(vid):
+            if vid not in visitors:
+                visitors[vid] = Visitor(vid, log)
+            return visitors[vid]
 
         for action in data.test_clickstream:
             cmd = action[0]
-            v = visitors[action[1]]
+            v = get_visitor(action[1])
             args = action[2:]
 
             if cmd == 'page':
@@ -69,9 +72,9 @@ class TestCombinations(TestCase):
                 v.split(args[0])
 
     def _check_backend_queries(self, backend):
-        self.assertEqual(backend.count('add to cart'), 2)
-        self.assertEqual(backend.count('began checkout'), 1)
-        self.assertEqual(backend.count('viewed page'), 3)
+        self.assertEqual(backend.count('add to cart'), 4)
+        self.assertEqual(backend.count('began checkout'), 3)
+        self.assertEqual(backend.count('viewed page'), 5)
 
         sessions = backend.get_sessions(goal='add to cart')
         self.assertIn('a', sessions)
@@ -94,7 +97,7 @@ class TestCombinations(TestCase):
         self.assertEqual(num, 1)
 
         sessions = backend.get_sessions()
-        self.assertEqual(len(sessions), 3)
+        self.assertEqual(len(sessions), 5)
 
     def _check_clickstream(self, log, backend):
         worker = Worker(log, backend)
