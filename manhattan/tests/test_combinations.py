@@ -108,6 +108,19 @@ class TestCombinations(TestCase):
         noreds = backend.count(variant=('red checkout form', 'False'))
         self.assertEqual(noreds, 1)
 
+        margin = backend.goal_value('order margin')
+        margin = margin.quantize(Decimal('.01'))
+        self.assertEqual(margin, Decimal('23.47'))
+
+        margin_per = backend.goal_value('margin per session')
+        margin_per = margin_per.quantize(Decimal('.01'))
+        self.assertEqual(margin_per, Decimal('3.90'))
+
+        margin_per_noreds = backend.goal_value(
+            'margin per session',
+            variant=('red checkout form', 'False'))
+        self.assertEqual(margin_per_noreds, Decimal('7.15'))
+
     def test_timerotating_log(self):
         path = '/tmp/manhattan-test-timelog'
         fnames = glob.glob('%s.[0-9]*' % path)

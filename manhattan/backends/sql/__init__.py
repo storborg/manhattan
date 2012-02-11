@@ -189,9 +189,26 @@ class SQLBackend(object):
             variant_id = self.get_variant(variant).id
         else:
             variant_id = None
+
         value = timeseries.total_value(goal_id=goal.id, variant_id=variant_id)
-        assert goal.value_type == visitor.SUM
-        return value
+
+        assert goal.value_type in (visitor.SUM, visitor.AVERAGE, visitor.PER)
+
+        if goal.value_type == visitor.SUM:
+            return value
+
+        elif goal.value_type == visitor.AVERAGE:
+            num_conversions = timeseries.count(goal_id=goal.id,
+                                               variant_id=variant_id)
+            return value / num_conversions
+
+        else:
+            if variant_id:
+                num_impressions = timeseries.count(variant_id=variant_id)
+            else:
+                page_goal = self.get_goal(u'viewed page')
+                num_impressions = timeseries.count(goal_id=page_goal.id)
+            return value / num_impressions
 
     def get_sessions(self, goal=None, variant=None):
         q = self._sessions_q(goal, variant)
