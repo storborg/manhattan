@@ -128,6 +128,13 @@ class TestCombinations(TestCase):
                                    start=2001, end=9999)
         self.assertEqual(part2_adds, 3)
 
+        part1_checkouts = backend.goal_value('completed checkout',
+                                             start=1, end=4000)
+        self.assertEqual(part1_checkouts, Decimal('31.78'))
+        part2_checkouts = backend.goal_value('completed checkout',
+                                             start=4001, end=9999)
+        self.assertEqual(part2_checkouts, Decimal('76.41'))
+
     def test_timerotating_log(self):
         path = '/tmp/manhattan-test-timelog'
         fnames = glob.glob('%s.[0-9]*' % path)
