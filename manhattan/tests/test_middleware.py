@@ -133,3 +133,10 @@ class TestMiddleware(TestCase):
                        extra_environ={'HTTP_USER_AGENT': sample_ua})
         record = self.process()
         self.assertEqual(record.user_agent, sample_ua.decode('latin1'))
+
+    def test_nongetpost_methods_not_processed(self):
+        resp = app.put('/somepage')
+        resp = app.delete('/somepage')
+        resp = app.options('/somepage')
+        records = list(log.process())
+        self.assertEqual(len(records), 0)

@@ -53,7 +53,8 @@ class ManhattanMiddleware(object):
             return resp(environ, start_response)
 
         resp = req.get_response(self.app)
-        visitor.page(req)
+        if req.method in ('GET', 'POST'):
+            visitor.page(req)
 
         if fresh:
             resp.set_cookie(self.cookie_name, self.signer.sign(visitor.id))
