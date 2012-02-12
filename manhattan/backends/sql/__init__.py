@@ -170,7 +170,7 @@ class SQLBackend(object):
                     filter(model.Impression.variant == variant)
         return q
 
-    def count(self, goal=None, variant=None):
+    def count(self, goal=None, variant=None, start=None, end=None):
         if goal:
             goal_id = self.get_goal(goal).id
         else:
@@ -181,7 +181,8 @@ class SQLBackend(object):
         else:
             variant_id = None
 
-        return timeseries.count(goal_id=goal_id, variant_id=variant_id)
+        return timeseries.count(goal_id=goal_id, variant_id=variant_id,
+                                start=start, end=end)
 
     def goal_value(self, goal, variant=None):
         goal = self.get_goal(goal)

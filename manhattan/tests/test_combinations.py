@@ -121,6 +121,13 @@ class TestCombinations(TestCase):
             variant=('red checkout form', 'False'))
         self.assertEqual(margin_per_noreds, Decimal('7.15'))
 
+        part1_adds = backend.count('add to cart',
+                                   start=1, end=2000)
+        self.assertEqual(part1_adds, 2)
+        part2_adds = backend.count('add to cart',
+                                   start=2001, end=9999)
+        self.assertEqual(part2_adds, 3)
+
     def test_timerotating_log(self):
         path = '/tmp/manhattan-test-timelog'
         fnames = glob.glob('%s.[0-9]*' % path)

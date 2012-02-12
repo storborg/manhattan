@@ -9,6 +9,7 @@ granularities = (
     604800,   # 1 week
     86400,    # 1 day
     3600,     # 1 hour
+    60,       # 1 minute
 )
 
 
@@ -135,14 +136,28 @@ def aggregate(col, goal_id=None, variant_id=None, start=None, end=None):
     if variant_id:
         q = q.where(t.c.variant_id == variant_id)
 
-    # TODO Add start/end filtering here.
+    if start:
+        q = q.where(t.c.start_timestamp >= start)
+    if end:
+        q = q.where(t.c.start_timestamp < end)
 
     return q.scalar()
 
 
 def choose_granularity(start, end):
-    assert not start and not end
-    return 'all'
+    if not start and not end:
+        return 'all'
+
+    assert start and end, 'must specify both start and end, or neither'
+
+    limit = (end - start) * 0.01
+    # Pick the largest granularity that's no larger than 1/10th of the range.
+    for granularity in granularities[1:]:
+        if granularity < limit:
+            return granularity
+
+    # Worst case, use the smallest granularity level we have.
+    return granularities[-1]
 
 
 def count(goal_id=None, variant_id=None, start=None, end=None):

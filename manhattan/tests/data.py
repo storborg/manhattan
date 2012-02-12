@@ -90,8 +90,6 @@ def run_clickstream(log):
         'margin per session': visitor.CURRENCY,
     }
 
-    start_timestamp = 1329006369
-
     visitors = {}
 
     def get_visitor(vid):
@@ -105,7 +103,7 @@ def run_clickstream(log):
         v.timestamp = types.MethodType(fake_timestamp, v, Visitor)
 
     for action in test_clickstream:
-        ts = start_timestamp + action[0]
+        ts = action[0]
         cmd = action[1]
         v = get_visitor(action[2])
         args = action[3:]
