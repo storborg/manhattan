@@ -125,3 +125,11 @@ class TestMiddleware(TestCase):
                          'iterable.')
         self.assertIn('/vpixel.gif', resp.body)
         self.assertTrue(inner_app.consumed_iter)
+
+    def test_latin1_user_agent(self):
+        # Example user agent is latin1-encoded, so should be preserved.
+        sample_ua = '\xc0 \xe0 hello'
+        resp = app.get('/somepage',
+                       extra_environ={'HTTP_USER_AGENT': sample_ua})
+        record = self.process()
+        self.assertEqual(record.user_agent, sample_ua.decode('latin1'))

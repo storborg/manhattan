@@ -63,13 +63,18 @@ class Visitor(object):
         :type request:
             webob.Request instance
         """
+        if request.user_agent:
+            print "decoding %r" % request.user_agent
+            ua = request.user_agent.decode('iso-8859-1', 'replace')
+        else:
+            ua = u''
         rec = PageRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
                          ip=request.remote_addr or '0.0.0.0',
                          method=request.method,
                          url=request.url,
-                         user_agent=request.user_agent or '',
+                         user_agent=ua,
                          referer=request.referer or '')
         self.write(rec)
 
