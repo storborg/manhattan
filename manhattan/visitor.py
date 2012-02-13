@@ -64,7 +64,6 @@ class Visitor(object):
             webob.Request instance
         """
         if request.user_agent:
-            print "decoding %r" % request.user_agent
             ua = request.user_agent.decode('iso-8859-1', 'replace')
         else:
             ua = u''
