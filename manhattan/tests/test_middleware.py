@@ -129,14 +129,13 @@ class TestMiddleware(TestCase):
     def test_latin1_user_agent(self):
         # Example user agent is latin1-encoded, so should be preserved.
         sample_ua = '\xc0 \xe0 hello'
-        resp = app.get('/somepage',
-                       extra_environ={'HTTP_USER_AGENT': sample_ua})
+        app.get('/somepage', extra_environ={'HTTP_USER_AGENT': sample_ua})
         record = self.process()
         self.assertEqual(record.user_agent, sample_ua.decode('latin1'))
 
     def test_nongetpost_methods_not_processed(self):
-        resp = app.put('/somepage')
-        resp = app.delete('/somepage')
-        resp = app.options('/somepage')
+        app.put('/somepage')
+        app.delete('/somepage')
+        app.options('/somepage')
         records = list(log.process())
         self.assertEqual(len(records), 0)
