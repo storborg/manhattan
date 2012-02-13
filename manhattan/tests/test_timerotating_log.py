@@ -128,7 +128,6 @@ class TimeRotatingLogTest(TestCase):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive-none')
         log_r.sleep_delay = 0.001
         consumed, consumer = make_thread_consumer(log_r)
-        time.sleep(log_r.sleep_delay)
         log_r.is_alive = False
 
     def test_unicode_names(self):

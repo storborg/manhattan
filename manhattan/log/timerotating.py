@@ -11,6 +11,7 @@ class TimeRotatingLog(TextLog):
     def __init__(self, path):
         self.path = path
         self.current_log_name = None
+        self.is_alive = True
 
     def log_name_for(self, ts):
         ts = int(ts)
@@ -85,7 +86,8 @@ class TimeRotatingLog(TextLog):
     def process(self, stay_alive=False):
         records_processed = 0
 
-        self.is_alive = stay_alive
+        if not stay_alive:
+            self.is_alive = False
 
         for line in self.tail_glob():
             yield self.parse(line.strip())
