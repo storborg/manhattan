@@ -81,14 +81,12 @@ class TimeRotatingLog(TextLog):
                 else:
                     break
             else:
-                yield line
+                pointer = '%s:%d' % (this_file, f.tell())
+                yield line, pointer
 
     def process(self, stay_alive=False):
-        records_processed = 0
-
         if not stay_alive:
             self.is_alive = False
 
-        for line in self.tail_glob():
-            yield self.parse(line.strip())
-            records_processed += 1
+        for line, pointer in self.tail_glob():
+            yield self.parse(line.strip()), pointer

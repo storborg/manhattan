@@ -25,4 +25,4 @@ class ZeroMQLog(TextLog):
                 msg = self.parse(self.sock.recv(flags=flags))
             except zmq.ZMQError:
                 break
-            yield msg
+            yield msg, None

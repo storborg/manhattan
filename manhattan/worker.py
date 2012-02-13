@@ -18,10 +18,10 @@ class Worker(object):
 
     def run(self, **kwargs):
         log.info('Worker started processing.')
-        for vals in self.log.process(**kwargs):
+        for vals, pointer in self.log.process(**kwargs):
             log.info('Handling record %r', vals)
             record = Record.from_list(vals)
-            self.backend.handle(record)
+            self.backend.handle(record, pointer)
         log.info('Worker finished processing.')
 
 

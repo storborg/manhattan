@@ -21,7 +21,7 @@ class MemoryLog(object):
         log.info('Playing back old log.')
         for record in to_process:
             log.info('Playing record: %r', record)
-            yield record
+            yield record, None
 
     def purge(self):
         log.info('Purging log.')

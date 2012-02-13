@@ -21,7 +21,7 @@ def make_thread_consumer(log_r):
     log_r.sleep_delay = 0.001
 
     def consume(l):
-        for rec in l.process(stay_alive=True):
+        for rec, ptr in l.process(stay_alive=True):
             consumed.append(Record.from_list(rec))
 
     consumer = Thread(target=consume, args=(log_r,))
@@ -50,7 +50,7 @@ class TimeRotatingLogTest(TestCase):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-basic')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 1)
-        rec = Record.from_list(records[0])
+        rec = Record.from_list(records[0][0])
         self.assertEqual(rec.url, '/foo')
 
     def test_multiple_logs(self):
@@ -67,8 +67,8 @@ class TimeRotatingLogTest(TestCase):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-mult')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 2)
-        self.assertEqual(Record.from_list(records[0]).url, '/foo')
-        self.assertEqual(Record.from_list(records[1]).url, '/bar')
+        self.assertEqual(Record.from_list(records[0][0]).url, '/foo')
+        self.assertEqual(Record.from_list(records[1][0]).url, '/bar')
 
     def test_stay_alive_single(self):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
@@ -144,5 +144,5 @@ class TimeRotatingLogTest(TestCase):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 1)
-        rec = Record.from_list(records[0])
+        rec = Record.from_list(records[0][0])
         self.assertEqual(rec.name, goal_name)

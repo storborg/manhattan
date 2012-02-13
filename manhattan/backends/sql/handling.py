@@ -40,8 +40,6 @@ def handle_record(rec):
                           name=rec.test_name,
                           selected=rec.selected)
 
-    meta.Session.commit()
-
 
 def record_page(ts, vid, site_id, ip, method, url, user_agent, referer):
     ts = parse_timestamp(ts)

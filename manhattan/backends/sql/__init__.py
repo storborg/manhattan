@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 
 from . import model, handling, reporting
-from .model import meta
+from .model import meta, resuming
 
 
 class SQLBackend(object):
@@ -13,8 +13,10 @@ class SQLBackend(object):
         model.init_model(self.engine)
         meta.metadata.create_all()
 
-    def handle(self, rec):
-        handling.handle_record(rec)
+    def handle(self, record, pointer):
+        handling.handle_record(record)
+        resuming.update_pointer(pointer)
+        meta.Session.commit()
 
     def count(self, goal=None, variant=None, start=None, end=None):
         return reporting.count(goal=goal, variant=variant,

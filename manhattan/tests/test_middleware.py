@@ -59,7 +59,7 @@ class TestMiddleware(TestCase):
     def process(self):
         records = list(log.process())
         self.assertEqual(len(records), 1)
-        record = Record.from_list(records[0])
+        record = Record.from_list(records[0][0])
         return record
 
     def test_request(self):

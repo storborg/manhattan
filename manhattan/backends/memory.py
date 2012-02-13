@@ -10,8 +10,9 @@ class MemoryBackend(object):
         self.goals = defaultdict(set)
         self.populations = defaultdict(set)
         self.all = set()
+        self.ptr = None
 
-    def handle(self, rec):
+    def handle(self, rec, ptr):
         assert rec.key in ('page', 'pixel', 'goal', 'split')
 
         if rec.key == 'page':
@@ -30,6 +31,8 @@ class MemoryBackend(object):
 
         else:  # split
             self.populations[(rec.test_name, rec.selected)].add(rec.vid)
+
+        self.ptr = ptr
 
     def count(self, goal, variant=None):
         """
