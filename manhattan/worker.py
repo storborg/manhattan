@@ -12,17 +12,16 @@ log = logging.getLogger(__name__)
 
 class Worker(object):
 
-    def __init__(self, log, *backends):
+    def __init__(self, log, backend):
         self.log = log
-        self.backends = backends
+        self.backend = backend
 
     def run(self, **kwargs):
         log.info('Worker started processing.')
         for vals in self.log.process(**kwargs):
             log.info('Handling record %r', vals)
             record = Record.from_list(vals)
-            for backend in self.backends:
-                backend.handle(record)
+            self.backend.handle(record)
         log.info('Worker finished processing.')
 
 
