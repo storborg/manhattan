@@ -4,38 +4,36 @@ from collections import defaultdict
 class MemoryBackend(object):
 
     def __init__(self):
-        self.requests = defaultdict(list)
-        self.nonbot = set()
-        self.visitors = {}
-        self.goals = defaultdict(set)
-        self.populations = defaultdict(set)
-        self.all = set()
-        self.ptr = None
+        self._nonbot = set()
+        self._visitors = {}
+        self._goals = defaultdict(set)
+        self._populations = defaultdict(set)
+        self._all = set()
+        self._ptr = None
 
     def handle(self, rec, ptr):
         assert rec.key in ('page', 'pixel', 'goal', 'split')
 
         if rec.key == 'page':
-            ts = int(float(rec.timestamp))
-            self.goals['viewed page'].add(rec.vid)
+            self._goals['viewed page'].add(rec.vid)
 
-            self.visitors[rec.vid] = dict(ip=rec.ip, user_agent=rec.user_agent)
-            self.requests[rec.vid].append((ts, rec.url, rec.ip, rec.method))
-            self.all.add(rec.vid)
+            self._visitors[rec.vid] = dict(ip=rec.ip,
+                                           user_agent=rec.user_agent)
+            self._all.add(rec.vid)
 
         elif rec.key == 'pixel':
-            self.nonbot.add(rec.vid)
+            self._nonbot.add(rec.vid)
 
         elif rec.key == 'goal':
-            self.goals[rec.name].add(rec.vid)
+            self._goals[rec.name].add(rec.vid)
 
         else:  # split
-            self.populations[(rec.test_name, rec.selected)].add(rec.vid)
+            self._populations[(rec.test_name, rec.selected)].add(rec.vid)
 
-        self.ptr = ptr
+        self._ptr = ptr
 
     def get_pointer(self):
-        return self.ptr
+        return self._ptr
 
     def count(self, goal, variant=None):
         """
@@ -48,10 +46,12 @@ class MemoryBackend(object):
         :param variant:
           Variant object, filters to sessions which belong to a given variant.
         """
-        sessions = self.goals[goal]
+        sessions = self._goals[goal]
 
         if variant:
-            sessions &= self.populations[variant]
+            sessions &= self._populations[variant]
+
+        sessions &= self._nonbot
 
         return len(sessions)
 
@@ -60,11 +60,14 @@ class MemoryBackend(object):
         Return a list of session ids which satisfy the given conditions.
         """
         if goal and variant:
-            sessions = self.goals[goal] & self.populations[variant]
+            sessions = self._goals[goal] & self._populations[variant]
         elif goal:
-            sessions = self.goals[goal]
+            sessions = self._goals[goal]
         elif variant:
-            sessions = self.populations[variant]
+            sessions = self._populations[variant]
         else:
-            sessions = self.all
+            sessions = self._all
+
+        sessions &= self._nonbot
+
         return sessions

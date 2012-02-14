@@ -1,10 +1,12 @@
 import time
 import logging
 import logging.config
+import code
 import argparse
 
 from .record import Record
 from .backends.sql import SQLBackend
+from .backends.memory import MemoryBackend
 from .log.timerotating import TimeRotatingLog
 
 
@@ -68,8 +70,11 @@ def main():
                    help='Print detailed output')
     p.add_argument('-p', '--path', dest='log_path', type=str,
                    help='Log path')
+    p.add_argument('-b', '--backend', dest='backend',
+                   type=str, default='sql', choices=('memory', 'sql'),
+                   help='Backend type')
     p.add_argument('-u', '--url', dest='url', type=str,
-                   help='Backend URL')
+                   help='SQL Backend URL')
     p.add_argument('--stay-alive', dest='stay_alive', action='store_true',
                    help='Stay alive and continue processing')
 
@@ -77,7 +82,19 @@ def main():
 
     logging.basicConfig(level=args.loglevel)
 
-    backend = SQLBackend(sqlalchemy_url=args.url)
+    if args.backend == 'memory':
+        backend = MemoryBackend()
+        stats_every = 5000
+    else:
+        backend = SQLBackend(sqlalchemy_url=args.url)
+        stats_every = 50
+
     log = TimeRotatingLog(args.log_path)
-    worker = Worker(log, backend)
+    worker = Worker(log, backend, stats_every=stats_every)
     worker.run(stay_alive=args.stay_alive)
+
+    if args.backend == 'memory':
+        code.interact(banner="""Manhattan backend shell
+
+          The MemoryBackend instance is available as 'backend'
+        """, local=dict(backend=backend))

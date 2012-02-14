@@ -1,6 +1,7 @@
 import logging
 
 import os
+import code
 import glob
 import sys
 from unittest import TestCase
@@ -75,10 +76,11 @@ class TestCombinations(TestCase):
         worker.run(resume=False)
         self._check_backend_queries(backend)
 
-    def test_memory_log(self):
+    def test_memory_log_memory_backend(self):
         log = MemoryLog()
         data.run_clickstream(log)
-        self._check_clickstream(log, MemoryBackend())
+        backend = MemoryBackend()
+        self._check_clickstream(log, backend)
 
     def test_zeromq_log(self):
         ctx = zmq.Context()
@@ -165,6 +167,35 @@ class TestCombinations(TestCase):
         worker_main()
 
         self._check_backend_queries(SQLBackend(sqlite_url))
+
+    def test_memory_worker_executable(self):
+        path = '/tmp/manhattan-test-timelog'
+        fnames = glob.glob('%s.[0-9]*' % path)
+        for fname in fnames:
+            os.remove(fname)
+
+        log = TimeRotatingLog(path)
+        data.run_clickstream(log)
+
+        sqlite_url = 'sqlite:////tmp/manhattan-test.sqlite'
+        drop_existing_tables(create_engine(sqlite_url))
+
+        sys.argv = ['manhattan-worker',
+                    '--backend=memory',
+                    '--path=%s' % path]
+
+        backend_container = []
+
+        def fake_interact(banner, local):
+            backend_container.append(local['backend'])
+
+        orig_interact = code.interact
+        try:
+            code.interact = fake_interact
+            worker_main()
+            self._check_backend_queries(backend_container[0])
+        finally:
+            code.interact = orig_interact
 
     def _run_resume(self, backend):
         path = '/tmp/manhattan-test-timelog'
