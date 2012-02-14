@@ -33,7 +33,7 @@ class TimeRotatingLog(TextLog):
         self.f.flush()
         flock(self.f, LOCK_UN)
 
-    def live_iter_glob(self):
+    def live_iter_glob(self, start_file):
         """
         Yield an infinite iterator of the available log file names. If there
         are no new files to yield, just re-yields the most recent one.
@@ -42,6 +42,11 @@ class TimeRotatingLog(TextLog):
         while True:
             fnames = glob.glob('%s.[0-9]*' % self.path)
             fnames.sort()
+
+            # Crop fnames to start at ``start_file`` if it is supplied.
+            if start_file:
+                fnames = fnames[fnames.index(start_file):]
+
             fresh_files = False
             for fn in fnames:
                 if fn > last_consumed:
@@ -56,16 +61,19 @@ class TimeRotatingLog(TextLog):
                 else:
                     break
 
-    def tail_glob(self):
+    def tail_glob(self, start_file, start_offset):
         """
         Return an iterator over all the matching log files, yielding a line at
         a time. At the end of all available files, poll the last file for new
         lines and look for new files. If a new file is created, abandon the
         previous file and follow that one.
         """
-        fnames = self.live_iter_glob()
+        fnames = self.live_iter_glob(start_file=start_file)
         this_file = next(fnames)
         f = open(this_file, 'rb')
+
+        if start_offset:
+            f.seek(start_offset)
 
         while True:
             start = f.tell()
@@ -84,9 +92,16 @@ class TimeRotatingLog(TextLog):
                 pointer = '%s:%d' % (this_file, f.tell())
                 yield line, pointer
 
-    def process(self, stay_alive=False):
+    def process(self, process_from=None, stay_alive=False):
         if not stay_alive:
             self.is_alive = False
 
-        for line, pointer in self.tail_glob():
+        if process_from:
+            start_file, start_offset = process_from.rsplit(':', 1)
+            start_offset = int(start_offset)
+        else:
+            start_file = start_offset = None
+
+        for line, pointer in self.tail_glob(start_file=start_file,
+                                            start_offset=start_offset):
             yield self.parse(line.strip()), pointer

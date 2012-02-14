@@ -34,6 +34,9 @@ class MemoryBackend(object):
 
         self.ptr = ptr
 
+    def get_pointer(self):
+        return self.ptr
+
     def count(self, goal, variant=None):
         """
         Return a count of the number of conversions on a given target.

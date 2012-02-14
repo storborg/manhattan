@@ -16,8 +16,12 @@ class Worker(object):
         self.log = log
         self.backend = backend
 
-    def run(self, **kwargs):
+    def run(self, resume=True, **kwargs):
         log.info('Worker started processing.')
+
+        if resume:
+            kwargs['process_from'] = self.backend.get_pointer()
+
         for vals, pointer in self.log.process(**kwargs):
             log.info('Handling record %r', vals)
             record = Record.from_list(vals)

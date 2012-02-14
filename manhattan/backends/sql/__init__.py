@@ -18,6 +18,9 @@ class SQLBackend(object):
         resuming.update_pointer(pointer)
         meta.Session.commit()
 
+    def get_pointer(self):
+        return resuming.get_pointer()
+
     def count(self, goal=None, variant=None, start=None, end=None):
         return reporting.count(goal=goal, variant=variant,
                                start=start, end=end)

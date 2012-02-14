@@ -16,17 +16,19 @@ def set_fake_name(log, index):
     log.log_name_for = types.MethodType(fake_name, log, TimeRotatingLog)
 
 
-def make_thread_consumer(log_r):
+def make_thread_consumer(log_r, process_from=None):
     consumed = []
+    last_pointer_container = [None]
     log_r.sleep_delay = 0.001
 
     def consume(l):
-        for rec, ptr in l.process(stay_alive=True):
+        for rec, ptr in l.process(stay_alive=True, process_from=process_from):
             consumed.append(Record.from_list(rec))
+            last_pointer_container[0] = ptr
 
     consumer = Thread(target=consume, args=(log_r,))
     consumer.start()
-    return consumed, consumer
+    return consumed, consumer, last_pointer_container
 
 
 class TimeRotatingLogTest(TestCase):
@@ -36,6 +38,7 @@ class TimeRotatingLogTest(TestCase):
         for path in ('/tmp/manhattan-test-trl-basic',
                      '/tmp/manhattan-test-trl-mult',
                      '/tmp/manhattan-test-trl-unicode',
+                     '/tmp/manhattan-test-trl-resume',
                      '/tmp/manhattan-test-trl-stayalive',
                      '/tmp/manhattan-test-trl-stayalive-mult'):
             for fn in glob.glob('%s.[0-9]*' % path):
@@ -73,7 +76,7 @@ class TimeRotatingLogTest(TestCase):
     def test_stay_alive_single(self):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
         log_r.sleep_delay = 0.001
-        consumed, consumer = make_thread_consumer(log_r)
+        consumed, consumer, _ = make_thread_consumer(log_r)
 
         try:
             self.assertEqual(len(consumed), 0)
@@ -99,7 +102,7 @@ class TimeRotatingLogTest(TestCase):
     def test_stay_alive_multiple(self):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
         log_r.sleep_delay = 0.001
-        consumed, consumer = make_thread_consumer(log_r)
+        consumed, consumer, _ = make_thread_consumer(log_r)
 
         try:
             self.assertEqual(len(consumed), 0)
@@ -127,7 +130,7 @@ class TimeRotatingLogTest(TestCase):
     def test_stay_alive_nofiles(self):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive-none')
         log_r.sleep_delay = 0.001
-        consumed, consumer = make_thread_consumer(log_r)
+        consumed, consumer, _ = make_thread_consumer(log_r)
         log_r.is_alive = False
 
     def test_unicode_names(self):
@@ -146,3 +149,42 @@ class TimeRotatingLogTest(TestCase):
         self.assertEqual(len(records), 1)
         rec = Record.from_list(records[0][0])
         self.assertEqual(rec.name, goal_name)
+
+    def test_resume(self):
+        log_w = TimeRotatingLog('/tmp/manhattan-test-trl-resume')
+
+        # Create a thread consumer
+        log_r1 = TimeRotatingLog('/tmp/manhattan-test-trl-resume')
+
+        consumed, consumer, ptr_container = make_thread_consumer(log_r1)
+
+        try:
+            # Write one record
+            log_w.write(PageRecord(url='/herp').to_list())
+            time.sleep(log_r1.sleep_delay * 10)
+            # Check that one record was read.
+            self.assertEqual(len(consumed), 1)
+            self.assertEqual(consumed[0].url, '/herp')
+        finally:
+            # Kill the thread
+            log_r1.is_alive = False
+            # Wait for it to die.
+            time.sleep(log_r1.sleep_delay * 10)
+
+        last_pointer = ptr_container[0]
+        self.assertIsNotNone(last_pointer)
+
+        try:
+            # Write one record
+            log_w.write(PageRecord(url='/derp').to_list())
+            time.sleep(log_r1.sleep_delay * 10)
+            # Create a new thread consumer
+            log_r2 = TimeRotatingLog('/tmp/manhattan-test-trl-resume')
+            consumed, consumer, _ = \
+                    make_thread_consumer(log_r2, process_from=last_pointer)
+            time.sleep(log_r2.sleep_delay * 10)
+            # Check that the second record was read.
+            self.assertEqual(len(consumed), 1)
+            self.assertEqual(consumed[0].url, '/derp')
+        finally:
+            log_r2.is_alive = False

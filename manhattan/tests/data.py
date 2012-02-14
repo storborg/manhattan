@@ -77,7 +77,7 @@ test_clickstream = [
 ]
 
 
-def run_clickstream(log):
+def run_clickstream(log, first=None, last=None):
     value_types = {
         'completed checkout': visitor.SUM,
         'order margin': visitor.AVERAGE,
@@ -102,7 +102,15 @@ def run_clickstream(log):
             return '%d.%04d' % (ts, randint(0, 9999))
         v.timestamp = types.MethodType(fake_timestamp, v, Visitor)
 
-    for action in test_clickstream:
+    stream = test_clickstream
+    if first and last:
+        stream = stream[first:last]
+    elif first:
+        stream = stream[first:]
+    elif last:
+        stream = stream[:last]
+
+    for action in stream:
         ts = action[0]
         cmd = action[1]
         v = get_visitor(action[2])

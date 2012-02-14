@@ -72,7 +72,7 @@ class TestCombinations(TestCase):
 
     def _check_clickstream(self, log, backend):
         worker = Worker(log, backend)
-        worker.run()
+        worker.run(resume=False)
         self._check_backend_queries(backend)
 
     def test_memory_log(self):
@@ -92,7 +92,6 @@ class TestCombinations(TestCase):
         log = MemoryLog()
         data.run_clickstream(log)
         url = 'sqlite:///'
-        url = 'mysql://manhattan:quux@localhost/manhattan_test'
         drop_existing_tables(create_engine(url))
         backend = SQLBackend(url, max_recent_visitors=1)
         self._check_clickstream(log, backend)
@@ -169,3 +168,38 @@ class TestCombinations(TestCase):
         worker_main()
 
         self._check_backend_queries(SQLBackend(sqlite_url))
+
+    def _run_resume(self, backend):
+        path = '/tmp/manhattan-test-timelog'
+        fnames = glob.glob('%s.[0-9]*' % path)
+        for fname in fnames:
+            os.remove(fname)
+
+        log_w = TimeRotatingLog(path)
+        data.run_clickstream(log_w, first=0, last=5)
+
+        log_r1 = TimeRotatingLog(path)
+        worker1 = Worker(log_r1, backend)
+        worker1.run()
+
+        first_pointer = backend.get_pointer()
+        self.assertIsNotNone(first_pointer)
+
+        data.run_clickstream(log_w, first=5)
+        log_r2 = TimeRotatingLog(path)
+        worker2 = Worker(log_r2, backend)
+        worker2.run(resume=True)
+
+        second_pointer = backend.get_pointer()
+        self.assertIsNotNone(second_pointer)
+
+        self._check_backend_queries(backend)
+
+    def test_memory_resume(self):
+        self._run_resume(MemoryBackend())
+
+    def test_sql_resume(self):
+        url = 'sqlite:////tmp/manhattan-test-sql-resume.sqlite'
+        drop_existing_tables(create_engine(url))
+        backend = SQLBackend(url)
+        self._run_resume(backend)
