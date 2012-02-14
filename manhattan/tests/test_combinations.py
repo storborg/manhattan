@@ -160,6 +160,7 @@ class TestCombinations(TestCase):
         log.f.flush()
 
         sqlite_url = 'sqlite:////tmp/manhattan-test.sqlite'
+        drop_existing_tables(create_engine(sqlite_url))
 
         sys.argv = ['manhattan-worker',
                     '--url=%s' % sqlite_url,
