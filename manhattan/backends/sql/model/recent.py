@@ -49,5 +49,5 @@ def truncate_recent(max_records):
             offset(max_records)
     delete_before = q.scalar()
     if delete_before:
-        q = t.delete().where(t.c.last_timestamp >= delete_before)
+        q = t.delete().where(t.c.last_timestamp < delete_before)
         meta.Session.execute(q)
