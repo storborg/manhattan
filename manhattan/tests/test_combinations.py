@@ -143,8 +143,6 @@ class TestCombinations(TestCase):
         log = TimeRotatingLog(path)
         data.run_clickstream(log)
 
-        log.f.flush()
-
         log2 = TimeRotatingLog(path)
         self._check_clickstream(log2, MemoryBackend())
 
@@ -156,8 +154,6 @@ class TestCombinations(TestCase):
 
         log = TimeRotatingLog(path)
         data.run_clickstream(log)
-
-        log.f.flush()
 
         sqlite_url = 'sqlite:////tmp/manhattan-test.sqlite'
         drop_existing_tables(create_engine(sqlite_url))

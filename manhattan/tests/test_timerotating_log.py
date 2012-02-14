@@ -48,8 +48,6 @@ class TimeRotatingLogTest(TestCase):
         log_w = TimeRotatingLog('/tmp/manhattan-test-trl-basic')
         log_w.write(PageRecord(url='/foo').to_list())
 
-        log_w.f.flush()
-
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-basic')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 1)
@@ -64,8 +62,6 @@ class TimeRotatingLogTest(TestCase):
 
         set_fake_name(log_w, '004')
         log_w.write(PageRecord(url='/bar').to_list())
-
-        log_w.f.flush()
 
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-mult')
         records = list(log_r.process(stay_alive=False))
@@ -84,14 +80,12 @@ class TimeRotatingLogTest(TestCase):
             log_w = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
 
             log_w.write(PageRecord(url='/baz').to_list())
-            log_w.f.flush()
             time.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 1)
             self.assertEqual(consumed[0].url, '/baz')
 
             log_w.write(PageRecord(url='/herp').to_list())
-            log_w.f.flush()
             time.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 2)
@@ -111,7 +105,6 @@ class TimeRotatingLogTest(TestCase):
 
             set_fake_name(log_w, '357')
             log_w.write(PageRecord(url='/baz').to_list())
-            log_w.f.flush()
             time.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 1)
@@ -119,7 +112,6 @@ class TimeRotatingLogTest(TestCase):
 
             set_fake_name(log_w, '358')
             log_w.write(PageRecord(url='/herp').to_list())
-            log_w.f.flush()
             time.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 2)
@@ -141,8 +133,6 @@ class TimeRotatingLogTest(TestCase):
                          value_type='',
                          value_format='')
         log_w.write(rec.to_list())
-
-        log_w.f.flush()
 
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
         records = list(log_r.process(stay_alive=False))
