@@ -4,7 +4,7 @@ from sqlalchemy.sql import select, func
 from . import meta
 
 
-granularities = (
+rollups = (
     'all',
     604800,   # 1 week
     86400,    # 1 day
@@ -18,8 +18,8 @@ impression_tables = {}
 variant_conversion_tables = {}
 
 
-for granularity in granularities:
-    conv = Table('conversions_%s_bucket' % granularity,
+for rollup in rollups:
+    conv = Table('conversions_%s_bucket' % rollup,
                  meta.metadata,
                  Column('goal_id', None, ForeignKey('goals.id'),
                         primary_key=True, autoincrement=False),
@@ -28,9 +28,9 @@ for granularity in granularities:
                  Column('count', types.Integer, nullable=False, default=0),
                  Column('value', types.Numeric(10, 2), nullable=True),
                  mysql_engine='InnoDB')
-    conversion_tables[granularity] = conv
+    conversion_tables[rollup] = conv
 
-    impr = Table('impressions_%s_bucket' % granularity,
+    impr = Table('impressions_%s_bucket' % rollup,
                  meta.metadata,
                  Column('variant_id', None, ForeignKey('variants.id'),
                         primary_key=True, autoincrement=False),
@@ -38,9 +38,9 @@ for granularity in granularities:
                         autoincrement=False),
                  Column('count', types.Integer, nullable=False, default=0),
                  mysql_engine='InnoDB')
-    impression_tables[granularity] = impr
+    impression_tables[rollup] = impr
 
-    varc = Table('variant_conversions_%s_bucket' % granularity,
+    varc = Table('variant_conversions_%s_bucket' % rollup,
                  meta.metadata,
                  Column('variant_id', None, ForeignKey('variants.id'),
                         primary_key=True, autoincrement=False),
@@ -50,19 +50,19 @@ for granularity in granularities:
                  Column('count', types.Integer, nullable=False, default=0),
                  Column('value', types.Numeric(10, 2), nullable=True),
                  mysql_engine='InnoDB')
-    variant_conversion_tables[granularity] = varc
+    variant_conversion_tables[rollup] = varc
 
 
-def bucket_for_timestamp(granularity, timestamp):
+def bucket_for_timestamp(rollup, timestamp):
     """
-    Given a timestamp and granularity, return the start_timestamp corresponding
+    Given a timestamp and rollup, return the start_timestamp corresponding
     to the bucket containing the given timestamp.
     """
-    if granularity not in granularities:
-        raise ValueError('invalid granularity: %r' % granularity)
-    if granularity == 'all':
+    if rollup not in rollups:
+        raise ValueError('invalid rollup: %r' % rollup)
+    if rollup == 'all':
         return 0
-    return timestamp - (timestamp % granularity)
+    return timestamp - (timestamp % rollup)
 
 
 def filter_q(t, q, start, goal_id=None, variant_id=None):
@@ -75,9 +75,9 @@ def filter_q(t, q, start, goal_id=None, variant_id=None):
 
 
 def increment(tables, timestamp, goal_id=None, variant_id=None, value=None):
-    for granularity in granularities:
-        start = bucket_for_timestamp(granularity, timestamp)
-        t = tables[granularity]
+    for rollup in rollups:
+        start = bucket_for_timestamp(rollup, timestamp)
+        t = tables[rollup]
 
         q = filter_q(t, select([t.c.count]), start, goal_id, variant_id)
 
@@ -125,9 +125,9 @@ def aggregate(col, goal_id=None, variant_id=None, start=None, end=None):
     else:
         tables = conversion_tables
 
-    granularity = choose_granularity(start, end)
+    rollup = choose_rollup(start, end)
 
-    t = tables[granularity]
+    t = tables[rollup]
     col = getattr(t.c, col)
     q = select([func.sum(col)])
 
@@ -144,20 +144,20 @@ def aggregate(col, goal_id=None, variant_id=None, start=None, end=None):
     return q.scalar()
 
 
-def choose_granularity(start, end):
+def choose_rollup(start, end):
     if not start and not end:
         return 'all'
 
     assert start and end, 'must specify both start and end, or neither'
 
     limit = (end - start) * 0.01
-    # Pick the largest granularity that's no larger than 1/10th of the range.
-    for granularity in granularities[1:]:
-        if granularity < limit:
-            return granularity
+    # Pick the largest rollup that's no larger than 1/10th of the range.
+    for rollup in rollups[1:]:
+        if rollup < limit:
+            return rollup
 
-    # Worst case, use the smallest granularity level we have.
-    return granularities[-1]
+    # Worst case, use the smallest rollup level we have.
+    return rollups[-1]
 
 
 def count(goal_id=None, variant_id=None, start=None, end=None):
