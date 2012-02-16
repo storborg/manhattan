@@ -7,7 +7,8 @@ class MemoryBackend(object):
         self._nonbot = set()
         self._visitors = {}
         self._goals = defaultdict(set)
-        self._populations = defaultdict(set)
+        self._vids_by_variant = defaultdict(set)
+        self._variants_by_vid = defaultdict(set)
         self._all = set()
         self._ptr = None
 
@@ -28,7 +29,9 @@ class MemoryBackend(object):
             self._goals[rec.name].add(rec.vid)
 
         else:  # split
-            self._populations[(rec.test_name, rec.selected)].add(rec.vid)
+            variant = rec.test_name, rec.selected
+            self._vids_by_variant[variant].add(rec.vid)
+            self._variants_by_vid[rec.vid].add(variant)
 
         self._ptr = ptr
 
@@ -49,7 +52,7 @@ class MemoryBackend(object):
         sessions = self._goals[goal]
 
         if variant:
-            sessions &= self._populations[variant]
+            sessions &= self._vids_by_variant[variant]
 
         sessions &= self._nonbot
 
@@ -60,11 +63,11 @@ class MemoryBackend(object):
         Return a list of session ids which satisfy the given conditions.
         """
         if goal and variant:
-            sessions = self._goals[goal] & self._populations[variant]
+            sessions = self._goals[goal] & self._vids_by_variant[variant]
         elif goal:
             sessions = self._goals[goal]
         elif variant:
-            sessions = self._populations[variant]
+            sessions = self._vids_by_variant[variant]
         else:
             sessions = self._all
 
