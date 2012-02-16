@@ -15,6 +15,7 @@ test_clickstream = [
     (290, 'page', 'a', '/potatoes/sweet'),
     (300, 'pixel', 'b'),
     (382, 'page', 'a', '/potatoes/russet'),
+    (385, 'goal', 'a', 'add to cart', ''),
     (394, 'page', 'b', '/cheese/parmesan'),
     (448, 'page', 'c', '/fruit/apples'),
     (462, 'page', 'b', '/cart'),
