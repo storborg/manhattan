@@ -63,9 +63,9 @@ class MemoryBackend(object):
         sessions = self._goals[goal]
 
         if variant:
-            sessions &= self._vids_by_variant[variant]
+            sessions = sessions & self._vids_by_variant[tuple(variant)]
 
-        sessions &= self._nonbot
+        sessions = sessions & self._nonbot
 
         return len(sessions)
 
@@ -82,6 +82,6 @@ class MemoryBackend(object):
         else:
             sessions = self._all
 
-        sessions &= self._nonbot
+        sessions = sessions & self._nonbot
 
         return sessions
