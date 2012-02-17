@@ -7,7 +7,7 @@ from unittest import TestCase
 from threading import Event, Thread
 
 from manhattan.server import Server, main as server_main
-from manhattan.client import Client, main as client_main
+from manhattan.client import ServerError, Client, main as client_main
 from manhattan.log.timerotating import TimeRotatingLog
 
 from . import data
@@ -20,6 +20,9 @@ class MockBackend(object):
 
     def bar(self, *args, **kw):
         return u"bar: %r %r" % (args, kw)
+
+    def failme(self, a):
+        raise ValueError('sad')
 
 
 class TestClientServer(TestCase):
@@ -36,6 +39,9 @@ class TestClientServer(TestCase):
             self.assertEqual(
                 client.bar(u'hello', u'world', **dict(a=12, b=u'blah')),
                 u"bar: (u'hello', u'world') {u'a': 12, u'b': u'blah'}")
+
+            with self.assertRaisesRegexp(ServerError, 'ValueError: sad'):
+                client.failme(42)
         finally:
             server.kill()
 

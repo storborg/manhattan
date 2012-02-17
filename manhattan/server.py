@@ -32,9 +32,14 @@ class Server(Thread):
         loop.stop()
 
     def handle_zmq(self, sock, events):
-        req = json.loads(sock.recv())
-        resp = self.handle(req)
-        sock.send(json.dumps(resp))
+        try:
+            req = json.loads(sock.recv())
+            resp = self.handle(req)
+            msg = json.dumps(['ok', resp])
+        except Exception as e:
+            msg = json.dumps(['error',
+                              '%s: %s' % (e.__class__.__name__, str(e))])
+        sock.send(msg)
 
     def handle(self, req):
         method, args, kwargs = req

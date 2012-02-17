@@ -5,6 +5,10 @@ import code
 ctx = zmq.Context()
 
 
+class ServerError(Exception):
+    pass
+
+
 class Client(object):
 
     def __init__(self, connect='tcp://127.0.0.1:5555'):
@@ -16,7 +20,11 @@ class Client(object):
         def rpc_method(*args, **kwargs):
             req = [name, args, kwargs]
             self.socket.send(json.dumps(req))
-            return json.loads(self.socket.recv())
+            status, resp = json.loads(self.socket.recv())
+            if status == 'ok':
+                return resp
+            else:
+                raise ServerError(resp)
         return rpc_method
 
 
