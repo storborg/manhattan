@@ -82,6 +82,18 @@ class TestCombinations(TestCase):
         backend = MemoryBackend()
         self._check_clickstream(log, backend)
 
+        tests = backend.tests()
+        self.assertEqual(tests, [('red checkout form', 1602, 3110)])
+
+        test_results = backend.test_results(u'red checkout form')
+        self.assertEqual(test_results,
+                         [('False', {'add to cart': 1,
+                                     u'viewed page': 1,
+                                     'began checkout': 1,
+                                     'margin per session': 1,
+                                     'order margin': 1,
+                                     'completed checkout': 1})])
+
     def test_zeromq_log(self):
         ctx = zmq.Context()
         log_r = ZeroMQLog(ctx, 'r', stay_alive=False, endpoints='tcp://*:8128')

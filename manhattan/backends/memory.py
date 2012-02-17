@@ -9,9 +9,15 @@ class MemoryBackend(object):
 
         self._visitors = {}
         self._goals = defaultdict(set)
+
+        self._variants_by_test = defaultdict(set)
+        self._test_starts = {}
+        self._test_lasts = {}
+
         self._vids_by_variant = defaultdict(set)
         self._variants_by_vid = defaultdict(set)
         self._all = set()
+
         self._ptr = None
 
     def handle(self, rec, ptr):
@@ -31,8 +37,10 @@ class MemoryBackend(object):
     def handle_nonbot(self, rec):
         assert rec.key in ('page', 'goal', 'split')
 
+        ts = int(float(rec.timestamp))
+
         if rec.key == 'page':
-            self._goals['viewed page'].add(rec.vid)
+            self._goals[u'viewed page'].add(rec.vid)
 
             self._visitors[rec.vid] = dict(ip=rec.ip,
                                            user_agent=rec.user_agent)
@@ -42,9 +50,13 @@ class MemoryBackend(object):
             self._goals[rec.name].add(rec.vid)
 
         else:  # split
+            self._variants_by_test[rec.test_name].add(rec.selected)
             variant = rec.test_name, rec.selected
             self._vids_by_variant[variant].add(rec.vid)
             self._variants_by_vid[rec.vid].add(variant)
+
+            self._test_starts.setdefault(rec.test_name, ts)
+            self._test_lasts[rec.test_name] = ts
 
     def get_pointer(self):
         return self._ptr
@@ -85,3 +97,25 @@ class MemoryBackend(object):
         sessions = sessions & self._nonbot
 
         return sessions
+
+    def tests(self):
+        """
+        Return a list of (test name, first_timestamp, last_timestamp) tuples.
+        """
+        ret = []
+        for test_name, start_ts in self._test_starts.iteritems():
+            ret.append((test_name, start_ts, self._test_lasts[test_name]))
+        return ret
+
+    def test_results(self, test_name):
+        """
+        Return a list of (variant name, conversions by goal dict)
+        """
+        ret = []
+        for selected in self._variants_by_test[test_name]:
+            conversions = {}
+            for goal in self._goals.keys():
+                conversions[goal] = \
+                        self.count(goal, variant=(test_name, selected))
+            ret.append((selected, conversions))
+        return ret
