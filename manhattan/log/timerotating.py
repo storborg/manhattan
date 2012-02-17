@@ -1,6 +1,7 @@
 import time
 import glob
 from fcntl import flock, LOCK_EX, LOCK_UN
+from threading import Event
 
 from .text import TextLog
 
@@ -11,7 +12,7 @@ class TimeRotatingLog(TextLog):
     def __init__(self, path):
         self.path = path
         self.current_log_name = None
-        self.is_alive = True
+        self.killed = Event()
 
     def log_name_for(self, ts):
         ts = int(ts)
@@ -56,7 +57,7 @@ class TimeRotatingLog(TextLog):
             if not fresh_files:
                 if fnames:
                     yield fnames[-1]
-                elif self.is_alive:
+                elif not self.killed.is_set():
                     time.sleep(self.sleep_delay)
                 else:
                     break
@@ -83,7 +84,7 @@ class TimeRotatingLog(TextLog):
                 if next_file != this_file:
                     this_file = next_file
                     f = open(this_file, 'rb')
-                elif self.is_alive:
+                elif not self.killed.is_set():
                     time.sleep(self.sleep_delay)
                     f.seek(start)
                 else:
@@ -92,9 +93,11 @@ class TimeRotatingLog(TextLog):
                 pointer = '%s:%d' % (this_file, f.tell())
                 yield line, pointer
 
-    def process(self, process_from=None, stay_alive=False):
+    def process(self, process_from=None, stay_alive=False, killed_event=None):
         if not stay_alive:
-            self.is_alive = False
+            self.killed.set()
+        if killed_event:
+            self.killed = killed_event
 
         if process_from:
             start_file, start_offset = process_from.rsplit(':', 1)

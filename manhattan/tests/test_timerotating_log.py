@@ -91,7 +91,7 @@ class TimeRotatingLogTest(TestCase):
             self.assertEqual(len(consumed), 2)
             self.assertEqual(consumed[1].url, '/herp')
         finally:
-            log_r.is_alive = False
+            log_r.killed.set()
 
     def test_stay_alive_multiple(self):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
@@ -117,13 +117,13 @@ class TimeRotatingLogTest(TestCase):
             self.assertEqual(len(consumed), 2)
             self.assertEqual(consumed[1].url, '/herp')
         finally:
-            log_r.is_alive = False
+            log_r.killed.set()
 
     def test_stay_alive_nofiles(self):
         log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive-none')
         log_r.sleep_delay = 0.001
         consumed, consumer, _ = make_thread_consumer(log_r)
-        log_r.is_alive = False
+        log_r.killed.set()
 
     def test_unicode_names(self):
         log_w = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
@@ -157,7 +157,7 @@ class TimeRotatingLogTest(TestCase):
             self.assertEqual(consumed[0].url, '/herp')
         finally:
             # Kill the thread
-            log_r1.is_alive = False
+            log_r1.killed.set()
             # Wait for it to die.
             time.sleep(log_r1.sleep_delay * 10)
 
@@ -177,4 +177,4 @@ class TimeRotatingLogTest(TestCase):
             self.assertEqual(len(consumed), 1)
             self.assertEqual(consumed[0].url, '/derp')
         finally:
-            log_r2.is_alive = False
+            log_r2.killed.set()
