@@ -1,4 +1,7 @@
 from collections import defaultdict
+from decimal import Decimal
+
+from manhattan import visitor
 
 
 class MemoryBackend(object):
@@ -8,7 +11,10 @@ class MemoryBackend(object):
         self._nonbot_queue = defaultdict(list)
 
         self._visitors = {}
-        self._goals = defaultdict(set)
+        self._goals = {}
+        self._conversions = defaultdict(set)
+        self._conversion_values = defaultdict(Decimal)
+        self._variant_conversion_values = defaultdict(Decimal)
 
         self._variants_by_test = defaultdict(set)
         self._test_starts = {}
@@ -32,6 +38,7 @@ class MemoryBackend(object):
         else:
             self._nonbot_queue[rec.vid].append(rec)
 
+        self._last_timestamp = rec.timestamp
         self._ptr = ptr
 
     def handle_nonbot(self, rec):
@@ -40,14 +47,23 @@ class MemoryBackend(object):
         ts = int(float(rec.timestamp))
 
         if rec.key == 'page':
-            self._goals[u'viewed page'].add(rec.vid)
+            self._conversions[u'viewed page'].add(rec.vid)
 
             self._visitors[rec.vid] = dict(ip=rec.ip,
                                            user_agent=rec.user_agent)
             self._all.add(rec.vid)
 
         elif rec.key == 'goal':
-            self._goals[rec.name].add(rec.vid)
+            self._conversions[rec.name].add(rec.vid)
+            if rec.name not in self._goals:
+                self._goals[rec.name] = (rec.value_type, rec.value_format)
+
+            if rec.value:
+                value = Decimal(rec.value)
+                self._conversion_values[rec.name] += value
+                for variant in self._variants_by_vid[rec.vid]:
+                    self._variant_conversion_values[(rec.name, variant)] += \
+                            value
 
         else:  # split
             self._variants_by_test[rec.test_name].add(rec.selected)
@@ -61,7 +77,7 @@ class MemoryBackend(object):
     def get_pointer(self):
         return self._ptr
 
-    def count(self, goal, variant=None):
+    def count(self, goal=None, variant=None):
         """
         Return a count of the number of conversions on a given target.
 
@@ -72,23 +88,45 @@ class MemoryBackend(object):
         :param variant:
           Variant object, filters to sessions which belong to a given variant.
         """
-        sessions = self._goals[goal]
-
-        if variant:
-            sessions = sessions & self._vids_by_variant[tuple(variant)]
+        if goal and variant:
+            sessions = (self._conversions[goal] &
+                        self._vids_by_variant[tuple(variant)])
+        elif goal:
+            sessions = self._conversions[goal]
+        else:
+            assert variant
+            sessions = self._vids_by_variant[tuple(variant)]
 
         sessions = sessions & self._nonbot
 
         return len(sessions)
+
+    def goal_value(self, goal, variant=None):
+        if variant:
+            total = self._variant_conversion_values[(goal, variant)]
+        else:
+            total = self._conversion_values[goal]
+
+        value_type, value_format = self._goals[goal]
+        assert value_type in (visitor.SUM, visitor.AVERAGE, visitor.PER)
+
+        if value_type == visitor.SUM:
+            return total
+
+        elif value_type == visitor.AVERAGE:
+            return total / self.count(goal, variant)
+
+        else:
+            return total / self.count(u'viewed page', variant)
 
     def get_sessions(self, goal=None, variant=None):
         """
         Return a list of session ids which satisfy the given conditions.
         """
         if goal and variant:
-            sessions = self._goals[goal] & self._vids_by_variant[variant]
+            sessions = self._conversions[goal] & self._vids_by_variant[variant]
         elif goal:
-            sessions = self._goals[goal]
+            sessions = self._conversions[goal]
         elif variant:
             sessions = self._vids_by_variant[variant]
         else:
@@ -114,7 +152,7 @@ class MemoryBackend(object):
         ret = []
         for selected in self._variants_by_test[test_name]:
             conversions = {}
-            for goal in self._goals.keys():
+            for goal in self._conversions.keys():
                 conversions[goal] = \
                         self.count(goal, variant=(test_name, selected))
             ret.append((selected, conversions))

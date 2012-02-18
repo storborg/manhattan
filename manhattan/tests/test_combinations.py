@@ -71,6 +71,30 @@ class TestCombinations(TestCase):
         sessions = backend.get_sessions()
         self.assertEqual(len(sessions), 6)
 
+        revenue = backend.goal_value('completed checkout')
+        self.assertEqual(revenue, Decimal('108.19'))
+
+        revenue_nored = backend.goal_value(
+            'completed checkout',
+            variant=('red checkout form', 'False'))
+        self.assertEqual(revenue_nored, Decimal('31.78'))
+
+        noreds = backend.count(variant=('red checkout form', 'False'))
+        self.assertEqual(noreds, 1)
+
+        margin = backend.goal_value('order margin')
+        margin = margin.quantize(Decimal('.01'))
+        self.assertEqual(margin, Decimal('23.47'))
+
+        margin_per = backend.goal_value('margin per session')
+        margin_per = margin_per.quantize(Decimal('.01'))
+        self.assertEqual(margin_per, Decimal('3.90'))
+
+        margin_per_noreds = backend.goal_value(
+            'margin per session',
+            variant=('red checkout form', 'False'))
+        self.assertEqual(margin_per_noreds, Decimal('7.15'))
+
     def _check_clickstream(self, log, backend):
         worker = Worker(log, backend)
         worker.run(resume=False)
@@ -109,30 +133,6 @@ class TestCombinations(TestCase):
         drop_existing_tables(create_engine(url))
         backend = SQLBackend(url, max_recent_visitors=1)
         self._check_clickstream(log, backend)
-
-        revenue = backend.goal_value('completed checkout')
-        self.assertEqual(revenue, Decimal('108.19'))
-
-        revenue_nored = backend.goal_value(
-            'completed checkout',
-            variant=('red checkout form', 'False'))
-        self.assertEqual(revenue_nored, Decimal('31.78'))
-
-        noreds = backend.count(variant=('red checkout form', 'False'))
-        self.assertEqual(noreds, 1)
-
-        margin = backend.goal_value('order margin')
-        margin = margin.quantize(Decimal('.01'))
-        self.assertEqual(margin, Decimal('23.47'))
-
-        margin_per = backend.goal_value('margin per session')
-        margin_per = margin_per.quantize(Decimal('.01'))
-        self.assertEqual(margin_per, Decimal('3.90'))
-
-        margin_per_noreds = backend.goal_value(
-            'margin per session',
-            variant=('red checkout form', 'False'))
-        self.assertEqual(margin_per_noreds, Decimal('7.15'))
 
         part1_adds = backend.count('add to cart',
                                    start=1, end=2000)
