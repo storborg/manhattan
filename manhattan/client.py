@@ -1,5 +1,4 @@
 import zmq
-import json
 import code
 
 ctx = zmq.Context()
@@ -13,14 +12,13 @@ class Client(object):
 
     def __init__(self, connect='tcp://127.0.0.1:5555'):
         self.socket = ctx.socket(zmq.REQ)
-        self.connect = connect
-        self.socket.connect(self.connect)
+        self.socket.connect(connect)
 
     def __getattr__(self, name):
         def rpc_method(*args, **kwargs):
             req = [name, args, kwargs]
-            self.socket.send(json.dumps(req))
-            status, resp = json.loads(self.socket.recv())
+            self.socket.send_json(req)
+            status, resp = self.socket.recv_json()
             if status == 'ok':
                 return resp
             else:

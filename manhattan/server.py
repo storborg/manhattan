@@ -1,6 +1,5 @@
 import logging
 import argparse
-import json
 from threading import Thread
 
 import zmq
@@ -33,13 +32,12 @@ class Server(Thread):
 
     def handle_zmq(self, sock, events):
         try:
-            req = json.loads(sock.recv())
+            req = sock.recv_json()
             resp = self.handle(req)
-            msg = json.dumps(['ok', resp])
+            msg = ['ok', resp]
         except Exception as e:
-            msg = json.dumps(['error',
-                              '%s: %s' % (e.__class__.__name__, str(e))])
-        sock.send(msg)
+            msg = ['error', '%s: %s' % (e.__class__.__name__, str(e))]
+        sock.send_json(msg)
 
     def handle(self, req):
         method, args, kwargs = req

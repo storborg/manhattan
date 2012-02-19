@@ -35,10 +35,10 @@ class TestClientServer(TestCase):
         try:
             server.start()
             self.assertEqual(client.foo(4, u'blah'),
-                             u"foo: 4 u'blah'")
+                             "foo: 4 'blah'")
             self.assertEqual(
                 client.bar(u'hello', u'world', **dict(a=12, b=u'blah')),
-                u"bar: (u'hello', u'world') {u'a': 12, u'b': u'blah'}")
+                "bar: ('hello', 'world') {'a': 12, 'b': 'blah'}")
 
             with self.assertRaisesRegexp(ServerError, 'ValueError: sad'):
                 client.failme(42)
