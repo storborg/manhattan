@@ -7,7 +7,8 @@ from unittest import TestCase
 from threading import Event, Thread
 
 from manhattan.server import Server, main as server_main
-from manhattan.client import ServerError, Client, main as client_main
+from manhattan.client import (ServerError, TimeoutError, Client,
+                              main as client_main)
 from manhattan.log.timerotating import TimeRotatingLog
 
 from . import data
@@ -44,6 +45,12 @@ class TestClientServer(TestCase):
                 client.failme(42)
         finally:
             server.kill()
+
+    def test_timeout(self):
+        client = Client('tcp://127.0.0.1:31339', wait=10)
+        with self.assertRaisesRegexp(TimeoutError,
+                                     'Timed out after 10 ms waiting'):
+            client.foo()
 
     def test_clientserver_executable(self):
         path = '/tmp/manhattan-test-timelog'
