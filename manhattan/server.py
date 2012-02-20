@@ -9,6 +9,8 @@ from manhattan.worker import Worker
 from manhattan.log.timerotating import TimeRotatingLog
 from manhattan.backends.memory import MemoryBackend
 
+log = logging.getLogger(__name__)
+
 
 loop = ioloop.IOLoop.instance()
 ctx = zmq.Context()
@@ -40,8 +42,11 @@ class Server(Thread):
         sock.send_json(msg)
 
     def handle(self, req):
+        log.info('Handling request: %r', req)
         method, args, kwargs = req
-        return getattr(self.backend, method)(*args, **kwargs)
+        resp = getattr(self.backend, method)(*args, **kwargs)
+        log.info('Returning response: %r', resp)
+        return resp
 
 
 def main(killed_event=None):
