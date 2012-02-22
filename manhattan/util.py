@@ -130,3 +130,24 @@ def choose_population(seed, populations=None):
         return pop_name[i]
 
     raise ValueError("Invalid population description")
+
+
+def decode_http_header(raw):
+    """
+    Decode a raw HTTP header into a unicode string. RFC 2616 specifies that
+    they should be latin1-encoded (a.k.a. iso-8859-1). If the passed-in value
+    is None, return an empty unicode string.
+
+    :param raw:
+        Raw HTTP header string.
+    :type raw:
+        string (non-unicode)
+    :returns:
+        Decoded HTTP header.
+    :rtype:
+        unicode string
+    """
+    if raw:
+        return raw.decode('iso-8859-1', 'replace')
+    else:
+        return u''

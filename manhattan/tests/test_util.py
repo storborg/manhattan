@@ -70,3 +70,10 @@ class TestUtil(TestCase):
         self.assertRoughly(counts['bar'], 30)
         self.assertRoughly(counts['baz'], 240)
         self.assertEqual(counts['quux'], 0)
+
+    def test_decode_http_header_none(self):
+        self.assertEqual(util.decode_http_header(None), u'')
+
+    def test_decode_http_header(self):
+        self.assertEqual(util.decode_http_header('hello \xf6 \xe1 world'),
+                         u'hello \xf6 \xe1 world')

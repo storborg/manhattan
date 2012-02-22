@@ -1,6 +1,6 @@
 import time
 
-from .util import choose_population
+from .util import choose_population, decode_http_header
 from .record import PageRecord, PixelRecord, GoalRecord, SplitRecord
 
 
@@ -63,18 +63,14 @@ class Visitor(object):
         :type request:
             webob.Request instance
         """
-        if request.user_agent:
-            ua = request.user_agent.decode('iso-8859-1', 'replace')
-        else:
-            ua = u''
         rec = PageRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
                          ip=request.remote_addr or '0.0.0.0',
                          method=request.method,
                          url=request.url,
-                         user_agent=ua,
-                         referer=request.referer or '')
+                         user_agent=decode_http_header(request.user_agent),
+                         referer=decode_http_header(request.referer))
         self.write(rec)
 
     def pixel(self):
