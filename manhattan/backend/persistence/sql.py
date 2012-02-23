@@ -22,7 +22,12 @@ log = logging.getLogger(__name__)
 
 
 class LargePickleType(types.PickleType):
-    impl = mysql.LONGBLOB
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'mysql':
+            return dialect.type_descriptor(mysql.LONGBLOB)
+        else:
+            return dialect.type_descriptor(types.LargeBinary)
 
 
 class SQLPersistentStore(object):
