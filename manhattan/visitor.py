@@ -63,12 +63,13 @@ class Visitor(object):
         :type request:
             webob.Request instance
         """
+        assert '%' not in request.url
         rec = PageRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
                          ip=request.remote_addr or '0.0.0.0',
                          method=request.method,
-                         url=request.url,
+                         url=request.url.decode('utf-8'),
                          user_agent=decode_http_header(request.user_agent),
                          referer=decode_http_header(request.referer))
         self.write(rec)
