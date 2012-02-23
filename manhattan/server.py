@@ -5,9 +5,10 @@ from threading import Thread
 import zmq
 from zmq.eventloop import ioloop
 
+import manhattan
 from manhattan.worker import Worker
 from manhattan.log.timerotating import TimeRotatingLog
-from manhattan.backends.memory import MemoryBackend
+from manhattan.backend import Backend
 
 log = logging.getLogger(__name__)
 
@@ -57,14 +58,16 @@ def main(killed_event=None):
                    help='Print detailed output')
     p.add_argument('-p', '--path', dest='log_path', type=str,
                    help='Log path')
-    p.add_argument('--stay-alive', dest='stay_alive', action='store_true',
-                   help='Stay alive and continue processing')
+    p.add_argument('-u', '--url', dest='url', type=str,
+                   help='SQL backend URL')
 
     args = p.parse_args()
 
     logging.basicConfig(level=args.loglevel)
 
-    backend = MemoryBackend()
+    backend = Backend(sqlalchemy_url=args.url)
+    manhattan.server_backend = backend
+
     log = TimeRotatingLog(args.log_path)
     worker = Worker(log, backend, stats_every=5000)
 

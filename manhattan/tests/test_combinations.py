@@ -15,6 +15,11 @@ warnings.filterwarnings('ignore',
                         '.*pysqlite does \*not\* support Decimal',
                         SAWarning,
                         'sqlalchemy.types')
+# Turn unicode bind param warnings into errors.
+#warnings.filterwarnings('error',
+#                        r'Unicode type received non-unicode bind',
+#                        SAWarning,
+#                        'sqlalchemy.engine.default')
 
 from manhattan.worker import Worker
 
@@ -22,8 +27,7 @@ from manhattan.log.memory import MemoryLog
 from manhattan.log.zeromq import ZeroMQLog
 from manhattan.log.timerotating import TimeRotatingLog
 
-from manhattan.backends.memory import MemoryBackend
-from manhattan.backends.sql import SQLBackend
+from manhattan.backend import Backend
 
 from . import data
 
@@ -42,32 +46,32 @@ def drop_existing_tables(engine):
 class TestCombinations(TestCase):
 
     def _check_backend_queries(self, backend):
-        self.assertEqual(backend.count('add to cart'), 5)
-        self.assertEqual(backend.count('began checkout'), 4)
-        self.assertEqual(backend.count('viewed page'), 6)
+        self.assertEqual(backend.count(u'add to cart'), 5)
+        self.assertEqual(backend.count(u'began checkout'), 4)
+        self.assertEqual(backend.count(u'viewed page'), 6)
 
-        sessions = backend.get_sessions(goal='add to cart')
-        self.assertIn('a', sessions)
-        self.assertIn('b', sessions)
-        self.assertNotIn('c', sessions)
+        #sessions = backend.get_sessions(goal='add to cart')
+        #self.assertIn('a', sessions)
+        #self.assertIn('b', sessions)
+        #self.assertNotIn('c', sessions)
 
-        sessions = backend.get_sessions(
-            goal='completed checkout',
-            variant=('red checkout form', 'False'))
-        self.assertEqual(len(sessions), 1)
-        self.assertIn('b', sessions)
+        #sessions = backend.get_sessions(
+        #    goal='completed checkout',
+        #    variant=('red checkout form', 'False'))
+        #self.assertEqual(len(sessions), 1)
+        #self.assertIn('b', sessions)
 
-        sessions = backend.get_sessions(
-            variant=('red checkout form', 'False'))
-        self.assertEqual(len(sessions), 1)
-        self.assertIn('b', sessions)
+        #sessions = backend.get_sessions(
+        #    variant=('red checkout form', 'False'))
+        #self.assertEqual(len(sessions), 1)
+        #self.assertIn('b', sessions)
 
-        num = backend.count('completed checkout',
-                            variant=('red checkout form', 'False'))
+        num = backend.count(u'completed checkout',
+                            variant=(u'red checkout form', u'False'))
         self.assertEqual(num, 1)
 
-        sessions = backend.get_sessions()
-        self.assertEqual(len(sessions), 6)
+        #sessions = backend.get_sessions()
+        #self.assertEqual(len(sessions), 6)
 
         revenue = backend.goal_value('completed checkout')
         self.assertEqual(revenue, Decimal('108.19'))
@@ -77,7 +81,7 @@ class TestCombinations(TestCase):
             variant=('red checkout form', 'False'))
         self.assertEqual(revenue_nored, Decimal('31.78'))
 
-        noreds = backend.count(variant=('red checkout form', 'False'))
+        noreds = backend.count(variant=(u'red checkout form', u'False'))
         self.assertEqual(noreds, 1)
 
         margin = backend.goal_value('order margin')
@@ -93,76 +97,19 @@ class TestCombinations(TestCase):
             variant=('red checkout form', 'False'))
         self.assertEqual(margin_per_noreds, Decimal('7.15'))
 
-    def _check_clickstream(self, log, backend):
-        worker = Worker(log, backend)
-        worker.run(resume=False)
-        self._check_backend_queries(backend)
-
-    def test_memory_log_memory_backend(self):
-        log = MemoryLog()
-        data.run_clickstream(log)
-        backend = MemoryBackend()
-        self._check_clickstream(log, backend)
-
-        tests = backend.tests()
-        self.assertEqual(tests, [('red checkout form', 1602, 3110)])
-
-        test_results = backend.test_results(u'red checkout form')
-        self.assertEqual(test_results,
-                         [('False', {'add to cart': 1,
-                                     u'viewed page': 1,
-                                     'began checkout': 1,
-                                     'margin per session': 1,
-                                     'order margin': 1,
-                                     'completed checkout': 1})])
-
-    def test_zeromq_log(self):
-        ctx = zmq.Context()
-        log_r = ZeroMQLog(ctx, 'r', stay_alive=False, endpoints='tcp://*:8128')
-        log_w = ZeroMQLog(ctx, 'w')
-
-        data.run_clickstream(log_w)
-        self._check_clickstream(log_r, MemoryBackend())
-
-    def test_sql_backend(self):
-        log = MemoryLog()
-        data.run_clickstream(log)
-        url = 'sqlite:///'
+    def _fresh_backend(self):
+        #url = 'mysql://manhattan:quux@localhost/manhattan_test'
+        url = 'sqlite:////tmp/manhattan-test.db'
         drop_existing_tables(create_engine(url))
-        backend = SQLBackend(url, max_recent_visitors=1)
-        self._check_clickstream(log, backend)
+        return Backend(url, flush_every=3)
 
-        part1_adds = backend.count('add to cart',
-                                   start=1, end=2000)
-        self.assertEqual(part1_adds, 2)
-        part2_adds = backend.count('add to cart',
-                                   start=2001, end=9999)
-        self.assertEqual(part2_adds, 3)
-
-        part1_checkouts = backend.goal_value('completed checkout',
-                                             start=1, end=4000)
-        self.assertEqual(part1_checkouts, Decimal('31.78'))
-        part2_checkouts = backend.goal_value('completed checkout',
-                                             start=4001, end=9999)
-        self.assertEqual(part2_checkouts, Decimal('76.41'))
-
-    def test_timerotating_log(self):
-        path = '/tmp/manhattan-test-timelog'
+    def test_resume(self):
+        path = '/tmp/manhattan-test-resume'
         fnames = glob.glob('%s.[0-9]*' % path)
         for fname in fnames:
             os.remove(fname)
 
-        log = TimeRotatingLog(path)
-        data.run_clickstream(log)
-
-        log2 = TimeRotatingLog(path)
-        self._check_clickstream(log2, MemoryBackend())
-
-    def _run_resume(self, backend):
-        path = '/tmp/manhattan-test-timelog'
-        fnames = glob.glob('%s.[0-9]*' % path)
-        for fname in fnames:
-            os.remove(fname)
+        backend = self._fresh_backend()
 
         log_w = TimeRotatingLog(path)
         data.run_clickstream(log_w, first=0, last=5)
@@ -184,11 +131,43 @@ class TestCombinations(TestCase):
 
         self._check_backend_queries(backend)
 
-    def test_memory_resume(self):
-        self._run_resume(MemoryBackend())
+    def test_basic(self):
+        path = '/tmp/manhattan-test-basic'
+        fnames = glob.glob('%s.[0-9]*' % path)
+        for fname in fnames:
+            os.remove(fname)
 
-    def test_sql_resume(self):
-        url = 'sqlite:////tmp/manhattan-test-sql-resume.sqlite'
-        drop_existing_tables(create_engine(url))
-        backend = SQLBackend(url)
-        self._run_resume(backend)
+        backend = self._fresh_backend()
+
+        log_w = TimeRotatingLog(path)
+        data.run_clickstream(log_w)
+
+        log_r = TimeRotatingLog(path)
+        worker1 = Worker(log_r, backend)
+        worker1.run()
+
+        self._check_backend_queries(backend)
+
+    def test_memory_log(self):
+        log = MemoryLog()
+        data.run_clickstream(log)
+
+        backend = self._fresh_backend()
+
+        worker1 = Worker(log, backend)
+        worker1.run(resume=False)
+
+        self._check_backend_queries(backend)
+
+    def test_zeromq_log(self):
+        ctx = zmq.Context()
+        log_r = ZeroMQLog(ctx, 'r', stay_alive=False, endpoints='tcp://*:8128')
+        log_w = ZeroMQLog(ctx, 'w')
+        data.run_clickstream(log_w)
+
+        backend = self._fresh_backend()
+
+        worker1 = Worker(log_r, backend)
+        worker1.run(resume=False)
+
+        self._check_backend_queries(backend)

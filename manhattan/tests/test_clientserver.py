@@ -6,12 +6,15 @@ import sys
 from unittest import TestCase
 from threading import Event, Thread
 
+from sqlalchemy import create_engine
+
 from manhattan.server import Server, main as server_main
 from manhattan.client import (ServerError, TimeoutError, Client,
                               main as client_main)
 from manhattan.log.timerotating import TimeRotatingLog
 
 from . import data
+from .test_combinations import drop_existing_tables
 
 
 class MockBackend(object):
@@ -61,7 +64,11 @@ class TestClientServer(TestCase):
         log = TimeRotatingLog(path)
         data.run_clickstream(log)
 
+        url = 'mysql://manhattan:quux@localhost/manhattan_test'
+        drop_existing_tables(create_engine(url))
+
         sys.argv = ['manhattan-server',
+                    '--url=%s' % url,
                     '--path=%s' % path]
 
         killed_event = Event()
@@ -72,9 +79,9 @@ class TestClientServer(TestCase):
 
         def fake_interact(banner, local):
             client = local['client']
-            self.assertEqual(client.count('add to cart'), 5)
-            self.assertEqual(client.count('began checkout'), 4)
-            self.assertEqual(client.count('viewed page'), 6)
+            self.assertEqual(client.count(u'add to cart'), 5)
+            self.assertEqual(client.count(u'began checkout'), 4)
+            self.assertEqual(client.count(u'viewed page'), 6)
 
         code.interact = fake_interact
 
