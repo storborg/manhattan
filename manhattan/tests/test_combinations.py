@@ -1,9 +1,7 @@
 import logging
 
 import os
-import code
 import glob
-import sys
 from unittest import TestCase
 from decimal import Decimal
 
@@ -18,7 +16,7 @@ warnings.filterwarnings('ignore',
                         SAWarning,
                         'sqlalchemy.types')
 
-from manhattan.worker import Worker, main as worker_main
+from manhattan.worker import Worker
 
 from manhattan.log.memory import MemoryLog
 from manhattan.log.zeromq import ZeroMQLog
@@ -159,55 +157,6 @@ class TestCombinations(TestCase):
 
         log2 = TimeRotatingLog(path)
         self._check_clickstream(log2, MemoryBackend())
-
-    def test_sql_worker_executable(self):
-        path = '/tmp/manhattan-test-timelog'
-        fnames = glob.glob('%s.[0-9]*' % path)
-        for fname in fnames:
-            os.remove(fname)
-
-        log = TimeRotatingLog(path)
-        data.run_clickstream(log)
-
-        sqlite_url = 'sqlite:////tmp/manhattan-test.sqlite'
-        drop_existing_tables(create_engine(sqlite_url))
-
-        sys.argv = ['manhattan-worker',
-                    '--url=%s' % sqlite_url,
-                    '--path=%s' % path]
-
-        worker_main()
-
-        self._check_backend_queries(SQLBackend(sqlite_url))
-
-    def test_memory_worker_executable(self):
-        path = '/tmp/manhattan-test-timelog'
-        fnames = glob.glob('%s.[0-9]*' % path)
-        for fname in fnames:
-            os.remove(fname)
-
-        log = TimeRotatingLog(path)
-        data.run_clickstream(log)
-
-        sqlite_url = 'sqlite:////tmp/manhattan-test.sqlite'
-        drop_existing_tables(create_engine(sqlite_url))
-
-        sys.argv = ['manhattan-worker',
-                    '--backend=memory',
-                    '--path=%s' % path]
-
-        backend_container = []
-
-        def fake_interact(banner, local):
-            backend_container.append(local['backend'])
-
-        orig_interact = code.interact
-        try:
-            code.interact = fake_interact
-            worker_main()
-            self._check_backend_queries(backend_container[0])
-        finally:
-            code.interact = orig_interact
 
     def _run_resume(self, backend):
         path = '/tmp/manhattan-test-timelog'

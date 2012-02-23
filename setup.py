@@ -15,7 +15,6 @@ setup(name="manhattan",
       license='PRIVATE',
       packages=['manhattan'],
       entry_points=dict(console_scripts=[
-          'manhattan-worker=manhattan.worker:main',
           'manhattan-server=manhattan.server:main',
           'manhattan-client=manhattan.client:main']),
       test_suite='nose.collector',
