@@ -63,7 +63,6 @@ class Visitor(object):
         :type request:
             webob.Request instance
         """
-        assert '%' not in request.url
         rec = PageRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
