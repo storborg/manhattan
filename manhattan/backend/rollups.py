@@ -40,7 +40,5 @@ class BrowserRollup(object):
             return u'Unknown'
 
     def get_bucket(self, timestamp, history):
-        if history.user_agents:
-            return self.browser_from_user_agent(list(history.user_agents)[0])
-        else:
-            return u'Unknown'
+        return (history.user_agents and
+                self.browser_from_user_agent(list(history.user_agents)[0]))

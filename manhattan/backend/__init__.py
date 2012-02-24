@@ -1,5 +1,4 @@
 import logging
-import time
 
 from collections import Counter, defaultdict
 from decimal import Decimal
@@ -24,17 +23,21 @@ default_rollups = {
 
 class Backend(object):
 
-    def __init__(self, sqlalchemy_url, rollups=None, flush_every=500):
+    def __init__(self, sqlalchemy_url, rollups=None,
+                 flush_every=500, cache_size=2000):
         self.rollups = rollups or default_rollups
 
         self.store = store = SQLPersistentStore(sqlalchemy_url)
 
         self.visitors = DeferredLRUCache(get_backend=store.get_visitor_history,
-                                         put_backend=store.put_visitor_history)
+                                         put_backend=store.put_visitor_history,
+                                         max_size=cache_size)
         self.tests = DeferredLRUCache(get_backend=store.get_test,
-                                      put_backend=store.put_test)
+                                      put_backend=store.put_test,
+                                      max_size=cache_size)
         self.goals = DeferredLRUCache(get_backend=store.get_goal,
-                                      put_backend=store.put_goal)
+                                      put_backend=store.put_goal,
+                                      max_size=cache_size)
 
         self.pointer = self.store.get_pointer()
         self.records_since_flush = 0
@@ -165,28 +168,22 @@ class Backend(object):
                     self.inc_variant_values[vc_key] += value
 
     def flush(self):
-        start = time.time()
         self.store.begin()
-        try:
-            self.visitors.flush()
-            self.tests.flush()
-            self.goals.flush()
 
-            # Add local counter state onto existing persisted counters.
-            self.store.increment_conversion_counters(self.inc_conversions,
-                                                     self.inc_values)
-            self.store.increment_impression_counters(self.inc_impressions)
-            self.store.increment_variant_conversion_counters(
-                self.inc_variant_conversions, self.inc_variant_values)
-            self.reset_counters()
+        self.visitors.flush()
+        self.tests.flush()
+        self.goals.flush()
 
-            self.store.update_pointer(self.pointer)
-            self.store.commit()
-        except:
-            self.store.rollback()
-            raise
-        end = time.time()
-        elapsed = end - start
+        # Add local counter state onto existing persisted counters.
+        self.store.increment_conversion_counters(self.inc_conversions,
+                                                 self.inc_values)
+        self.store.increment_impression_counters(self.inc_impressions)
+        self.store.increment_variant_conversion_counters(
+            self.inc_variant_conversions, self.inc_variant_values)
+        self.reset_counters()
+
+        self.store.update_pointer(self.pointer)
+        self.store.commit()
 
     def count(self, goal=None, variant=None, rollup_key='all', bucket_id=0):
         assert goal or variant, "must specify goal or variant"

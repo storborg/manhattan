@@ -33,9 +33,6 @@ class DeferredLRUCache(object):
     def prune(self):
         while len(self.entries) > self.max_size:
             key, value = self.entries.popitem(last=False)
-            if key in self.dirty:
-                import pdb
-                pdb.set_trace()
             assert key not in self.dirty
 
     def flush(self):

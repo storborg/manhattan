@@ -1,9 +1,6 @@
 import logging
 import warnings
 
-import cPickle as pickle
-from decimal import Decimal
-
 from sqlalchemy import MetaData, Table, Column, types, create_engine, select
 from sqlalchemy.sql import and_
 from sqlalchemy.dialects import mysql
@@ -54,7 +51,7 @@ class SQLPersistentStore(object):
             'tests',
             self.metadata,
             Column('id', types.Integer, primary_key=True),
-            Column('name', types.Unicode(255), nullable=False, index=True),
+            Column('name', types.String(255), nullable=False, index=True),
             Column('first_timestamp', types.Integer, nullable=False),
             Column('last_timestamp', types.Integer, nullable=False),
             mysql_engine='InnoDB')
@@ -63,7 +60,7 @@ class SQLPersistentStore(object):
             'goals',
             self.metadata,
             Column('id', types.Integer, primary_key=True),
-            Column('name', types.Unicode(255), nullable=False, index=True),
+            Column('name', types.String(255), nullable=False, index=True),
             Column('value_type', types.CHAR(1), nullable=False, default=''),
             Column('value_format', types.CHAR(1), nullable=False, default=''),
             mysql_engine='InnoDB')
@@ -71,7 +68,7 @@ class SQLPersistentStore(object):
         self.conversion_counts_table = Table(
             'conversion_counts',
             self.metadata,
-            Column('name', types.Unicode(255), primary_key=True),
+            Column('name', types.String(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
             Column('bucket_id', types.String(255), primary_key=True,
                    autoincrement=False),
@@ -82,8 +79,8 @@ class SQLPersistentStore(object):
         self.impression_counts_table = Table(
             'impression_counts',
             self.metadata,
-            Column('name', types.Unicode(255), primary_key=True),
-            Column('selected', types.Unicode(255), primary_key=True),
+            Column('name', types.String(255), primary_key=True),
+            Column('selected', types.String(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
             Column('bucket_id', types.String(255), primary_key=True,
                    autoincrement=False),
@@ -93,9 +90,9 @@ class SQLPersistentStore(object):
         self.variant_conversion_counts_table = Table(
             'variant_conversion_counts',
             self.metadata,
-            Column('goal_name', types.Unicode(255), primary_key=True),
-            Column('test_name', types.Unicode(255), primary_key=True),
-            Column('selected', types.Unicode(255), primary_key=True),
+            Column('goal_name', types.String(255), primary_key=True),
+            Column('test_name', types.String(255), primary_key=True),
+            Column('selected', types.String(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
             Column('bucket_id', types.String(255), primary_key=True,
                    autoincrement=False),
@@ -260,9 +257,6 @@ class SQLPersistentStore(object):
 
     def commit(self):
         return self.engine.commit()
-
-    def rollback(self):
-        return self.engine.rollback()
 
     def count_conversions(self, name, rollup_key, bucket_id):
         t = self.conversion_counts_table

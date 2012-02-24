@@ -2,6 +2,7 @@ import code
 import os
 import glob
 import sys
+import time
 
 from unittest import TestCase
 from threading import Event, Thread
@@ -74,6 +75,9 @@ class TestClientServer(TestCase):
         killed_event = Event()
         th = Thread(target=server_main, args=(killed_event,))
         th.start()
+
+        # Give the server time to process all the records before querying it.
+        time.sleep(0.5)
 
         orig_interact = code.interact
 

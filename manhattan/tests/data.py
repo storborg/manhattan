@@ -50,12 +50,14 @@ test_clickstream = [
     (3600, 'page', 'c', '/'),
     (3620, 'page', 'd', '/cart'),
     (4114, 'goal', 'd', 'add to cart', ''),
+    (4278, 'split', 'd', 'red checkout form'),
     (4278, 'page', 'd', '/checkout'),
     (4278, 'goal', 'd', 'began checkout', ''),
     (4534, 'page', 'a', '/account'),
     (4600, 'page', 'e', '/fruit'),
     (4616, 'pixel', 'e'),
     (4700, 'page', 'bot', '/fruit/cherries'),
+    (4990, 'split', 'd', 'red checkout form'),
     (4990, 'page', 'd', '/checkout/complete'),
     (4990, 'goal', 'd', 'completed checkout', 64.99),
     (4990, 'goal', 'd', 'order margin', 20.1),
@@ -65,10 +67,12 @@ test_clickstream = [
     (5226, 'page', 'e', '/fruit/pears'),
     (5244, 'page', 'e', '/cart'),
     (5244, 'goal', 'e', 'add to cart', ''),
+    (5950, 'split', 'e', 'red checkout form'),
     (5950, 'page', 'e', '/checkout'),
     (5950, 'goal', 'e', 'began checkout', ''),
     (6278, 'page', 'd', '/account'),
     (6396, 'page', 'd', '/'),
+    (6620, 'split', 'e', 'red checkout form'),
     (6620, 'page', 'e', '/checkout/complete'),
     (6620, 'goal', 'e', 'completed checkout', 11.42),
     (6620, 'goal', 'e', 'order margin', 27.8),
@@ -79,6 +83,7 @@ test_clickstream = [
     (7068, 'page', 'f', '/cart'),
     (7068, 'goal', 'f', 'add to cart', ''),
     (7198, 'page', 'f', '/cheese'),
+    (7246, 'split', 'f', 'red checkout form'),
     (7246, 'page', 'f', '/checkout'),
     (7246, 'goal', 'f', 'began checkout', '')
 ]
@@ -95,6 +100,16 @@ def run_clickstream(log, first=None, last=None):
         'completed checkout': visitor.CURRENCY,
         'order margin': visitor.PERCENTAGE,
         'margin per session': visitor.CURRENCY,
+    }
+
+    browsers = {
+        'a': u'Chrome/666.0',
+        'b': u'Safari/12345',
+        'c': u'Firefox/infinity',
+        'd': u'Chrome/17',
+        'e': u'Opera/sucks',
+        'f': u'MSIE/9',
+        'bot': u'ScroogleBot',
     }
 
     visitors = {}
@@ -127,11 +142,12 @@ def run_clickstream(log, first=None, last=None):
 
         if cmd == 'page':
             req = Request.blank(args[0])
+            req.user_agent = browsers[action[2]]
             v.page(req)
         elif cmd == 'pixel':
             v.pixel()
         elif cmd == 'goal':
-            goal_name = args[0]
+            goal_name = args[0].decode('ascii')
             value = args[1]
             value_type = value_types.get(goal_name)
             value_format = value_formats.get(goal_name)
@@ -139,4 +155,4 @@ def run_clickstream(log, first=None, last=None):
                    value_type=value_type,
                    value_format=value_format)
         elif cmd == 'split':
-            v.split(args[0])
+            v.split(args[0].decode('ascii'))

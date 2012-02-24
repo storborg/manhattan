@@ -16,10 +16,10 @@ warnings.filterwarnings('ignore',
                         SAWarning,
                         'sqlalchemy.types')
 # Turn unicode bind param warnings into errors.
-#warnings.filterwarnings('error',
-#                        r'Unicode type received non-unicode bind',
-#                        SAWarning,
-#                        'sqlalchemy.engine.default')
+warnings.filterwarnings('error',
+                        r'Unicode type received non-unicode bind',
+                        SAWarning,
+                        'sqlalchemy.engine.default')
 
 from manhattan.worker import Worker
 
@@ -68,40 +68,42 @@ class TestCombinations(TestCase):
 
         num = backend.count(u'completed checkout',
                             variant=(u'red checkout form', u'False'))
-        self.assertEqual(num, 1)
+        self.assertEqual(num, 3)
 
         #sessions = backend.get_sessions()
         #self.assertEqual(len(sessions), 6)
 
-        revenue = backend.goal_value('completed checkout')
+        revenue = backend.goal_value(u'completed checkout')
         self.assertEqual(revenue, Decimal('108.19'))
 
         revenue_nored = backend.goal_value(
-            'completed checkout',
-            variant=('red checkout form', 'False'))
-        self.assertEqual(revenue_nored, Decimal('31.78'))
+            u'completed checkout',
+            variant=(u'red checkout form', u'False'))
+        self.assertEqual(revenue_nored, Decimal('108.19'))
 
         noreds = backend.count(variant=(u'red checkout form', u'False'))
-        self.assertEqual(noreds, 1)
+        self.assertEqual(noreds, 3)
 
-        margin = backend.goal_value('order margin')
+        margin = backend.goal_value(u'order margin')
         margin = margin.quantize(Decimal('.01'))
         self.assertEqual(margin, Decimal('23.47'))
 
-        margin_per = backend.goal_value('margin per session')
+        margin_per = backend.goal_value(u'margin per session')
         margin_per = margin_per.quantize(Decimal('.01'))
         self.assertEqual(margin_per, Decimal('3.90'))
 
         margin_per_noreds = backend.goal_value(
-            'margin per session',
-            variant=('red checkout form', 'False'))
-        self.assertEqual(margin_per_noreds, Decimal('7.15'))
+            u'margin per session',
+            variant=(u'red checkout form', u'False'))
+        margin_per_noreds = margin_per_noreds.quantize(Decimal('.01'))
+        self.assertEqual(margin_per_noreds, Decimal('7.79'))
 
-    def _fresh_backend(self):
+    def _get_backend(self, reset=False):
         #url = 'mysql://manhattan:quux@localhost/manhattan_test'
         url = 'sqlite:////tmp/manhattan-test.db'
-        drop_existing_tables(create_engine(url))
-        return Backend(url, flush_every=3)
+        if reset:
+            drop_existing_tables(create_engine(url))
+        return Backend(url, flush_every=2, cache_size=5)
 
     def test_resume(self):
         path = '/tmp/manhattan-test-resume'
@@ -109,10 +111,10 @@ class TestCombinations(TestCase):
         for fname in fnames:
             os.remove(fname)
 
-        backend = self._fresh_backend()
+        backend = self._get_backend(reset=True)
 
         log_w = TimeRotatingLog(path)
-        data.run_clickstream(log_w, first=0, last=5)
+        data.run_clickstream(log_w, first=0, last=25)
 
         log_r1 = TimeRotatingLog(path)
         worker1 = Worker(log_r1, backend)
@@ -121,7 +123,9 @@ class TestCombinations(TestCase):
         first_pointer = backend.get_pointer()
         self.assertIsNotNone(first_pointer)
 
-        data.run_clickstream(log_w, first=5)
+        backend = self._get_backend(reset=False)
+
+        data.run_clickstream(log_w, first=25)
         log_r2 = TimeRotatingLog(path)
         worker2 = Worker(log_r2, backend)
         worker2.run(resume=True)
@@ -137,7 +141,7 @@ class TestCombinations(TestCase):
         for fname in fnames:
             os.remove(fname)
 
-        backend = self._fresh_backend()
+        backend = self._get_backend(reset=True)
 
         log_w = TimeRotatingLog(path)
         data.run_clickstream(log_w)
@@ -152,7 +156,7 @@ class TestCombinations(TestCase):
         log = MemoryLog()
         data.run_clickstream(log)
 
-        backend = self._fresh_backend()
+        backend = self._get_backend(reset=True)
 
         worker1 = Worker(log, backend)
         worker1.run(resume=False)
@@ -165,7 +169,7 @@ class TestCombinations(TestCase):
         log_w = ZeroMQLog(ctx, 'w')
         data.run_clickstream(log_w)
 
-        backend = self._fresh_backend()
+        backend = self._get_backend(reset=True)
 
         worker1 = Worker(log_r, backend)
         worker1.run(resume=False)
