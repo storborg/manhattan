@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from manhattan import visitor
 
-from .rollups import AllRollup, LocalDayRollup
+from .rollups import AllRollup, LocalDayRollup, BrowserRollup
 from .cache import DeferredLRUCache
 from .model import VisitorHistory, Test, Goal
 
@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 default_rollups = {
     'all': AllRollup(),
     'pst_day': LocalDayRollup('America/Los_Angeles'),
+    'browser': BrowserRollup(),
 }
 
 
@@ -83,13 +84,12 @@ class Backend(object):
         ts = int(float(rec.timestamp))
 
         if rec.key == 'page':
+            history.ips.add(rec.ip)
+            history.user_agents.add(rec.user_agent)
             self.record_conversion(history,
                                    vid=rec.vid,
                                    name=u'viewed page',
                                    timestamp=ts)
-
-            history.ips.add(rec.ip)
-            history.user_agents.add(rec.user_agent)
 
         elif rec.key == 'goal':
             self.record_conversion(history,
@@ -124,8 +124,8 @@ class Backend(object):
         # Record this impression in appropriate time buckets both on the
         # history object and in the current incremental accumulators.
         for rollup_key, rollup in self.rollups.iteritems():
-            bucket_start = rollup.bucket_start(timestamp)
-            key = (name, selected, rollup_key, bucket_start)
+            bucket_id = rollup.get_bucket(timestamp, history)
+            key = (name, selected, rollup_key, bucket_id)
             if key not in history.impression_keys:
                 history.impression_keys.add(key)
                 self.inc_impressions[key] += 1
@@ -147,9 +147,9 @@ class Backend(object):
         # Record this goal conversion in appropriate time buckets both on the
         # history object and in the current incremental accumulators.
         for rollup_key, rollup in self.rollups.iteritems():
-            bucket_start = rollup.bucket_start(timestamp)
+            bucket_id = rollup.get_bucket(timestamp, history)
 
-            conv_key = (name, rollup_key, bucket_start)
+            conv_key = (name, rollup_key, bucket_id)
             if conv_key not in history.conversion_keys:
                 history.conversion_keys.add(conv_key)
                 self.inc_conversions[conv_key] += 1
@@ -157,7 +157,7 @@ class Backend(object):
                 self.inc_values[conv_key] += value
 
             for test_name, selected in history.variants:
-                vc_key = (name, test_name, selected, rollup_key, bucket_start)
+                vc_key = (name, test_name, selected, rollup_key, bucket_id)
                 if vc_key not in history.variant_conversion_keys:
                     history.variant_conversion_keys.add(vc_key)
                     self.inc_variant_conversions[vc_key] += 1
@@ -188,35 +188,35 @@ class Backend(object):
         end = time.time()
         elapsed = end - start
 
-    def count(self, goal=None, variant=None, rollup_key='all', bucket_start=0):
+    def count(self, goal=None, variant=None, rollup_key='all', bucket_id=0):
         assert goal or variant, "must specify goal or variant"
 
         if goal and variant:
             test_name, selected = variant
-            key = goal, test_name, selected, rollup_key, bucket_start
+            key = goal, test_name, selected, rollup_key, bucket_id
             local = self.inc_variant_conversions[key]
             flushed = self.store.count_variant_conversions(*key)[0]
         elif goal:
-            key = goal, rollup_key, bucket_start
+            key = goal, rollup_key, bucket_id
             local = self.inc_conversions[key]
             flushed = self.store.count_conversions(*key)[0]
         else:
             # variant
             name, selected = variant
-            key = name, selected, rollup_key, bucket_start
+            key = name, selected, rollup_key, bucket_id
             local = self.inc_impressions[key]
             flushed = self.store.count_impressions(*key)
 
         return local + flushed
 
-    def goal_value(self, goal, variant=None, rollup_key='all', bucket_start=0):
+    def goal_value(self, goal, variant=None, rollup_key='all', bucket_id=0):
         if variant:
             test_name, selected = variant
-            key = goal, test_name, selected, rollup_key, bucket_start
+            key = goal, test_name, selected, rollup_key, bucket_id
             local = self.inc_variant_values[key]
             flushed = self.store.count_variant_conversions(*key)[1]
         else:
-            key = goal, rollup_key, bucket_start
+            key = goal, rollup_key, bucket_id
             local = self.inc_values[key]
             flushed = self.store.count_conversions(*key)[1]
         value = local + Decimal(str(flushed))

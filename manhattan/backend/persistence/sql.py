@@ -73,7 +73,7 @@ class SQLPersistentStore(object):
             self.metadata,
             Column('name', types.Unicode(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
-            Column('bucket_start', types.Integer, primary_key=True,
+            Column('bucket_id', types.String(255), primary_key=True,
                    autoincrement=False),
             Column('count', types.Integer, nullable=False, default=0),
             Column('value', types.Float, nullable=False, default=0),
@@ -85,7 +85,7 @@ class SQLPersistentStore(object):
             Column('name', types.Unicode(255), primary_key=True),
             Column('selected', types.Unicode(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
-            Column('bucket_start', types.Integer, primary_key=True,
+            Column('bucket_id', types.String(255), primary_key=True,
                    autoincrement=False),
             Column('count', types.Integer, nullable=False, default=0),
             mysql_engine='InnoDB')
@@ -97,7 +97,7 @@ class SQLPersistentStore(object):
             Column('test_name', types.Unicode(255), primary_key=True),
             Column('selected', types.Unicode(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
-            Column('bucket_start', types.Integer, primary_key=True,
+            Column('bucket_id', types.String(255), primary_key=True,
                    autoincrement=False),
             Column('count', types.Integer, nullable=False, default=0),
             Column('value', types.Float, nullable=False, default=0),
@@ -191,19 +191,19 @@ class SQLPersistentStore(object):
         for key in set(inc_conversions) | set(inc_values):
             delta = inc_conversions.get(key, 0)
             value = inc_values.get(key, 0)
-            name, rollup_key, bucket_start = key
+            name, rollup_key, bucket_id = key
 
             q = t.update().values(count=t.c.count + delta,
                                   value=t.c.value + value).\
                     where(and_(t.c.name == name,
                                t.c.rollup_key == rollup_key,
-                               t.c.bucket_start == bucket_start))
+                               t.c.bucket_id == bucket_id))
             r = q.execute()
 
             if r.rowcount == 0:
                 q = t.insert().values(name=name,
                                       rollup_key=rollup_key,
-                                      bucket_start=bucket_start,
+                                      bucket_id=bucket_id,
                                       count=delta,
                                       value=value)
                 q.execute()
@@ -211,20 +211,20 @@ class SQLPersistentStore(object):
     def increment_impression_counters(self, inc_impressions):
         t = self.impression_counts_table
         for key, delta in inc_impressions.iteritems():
-            name, selected, rollup_key, bucket_start = key
+            name, selected, rollup_key, bucket_id = key
 
             q = t.update().values(count=t.c.count + delta).\
                     where(and_(t.c.name == name,
                                t.c.selected == selected,
                                t.c.rollup_key == rollup_key,
-                               t.c.bucket_start == bucket_start))
+                               t.c.bucket_id == bucket_id))
             r = q.execute()
 
             if r.rowcount == 0:
                 q = t.insert().values(name=name,
                                       selected=selected,
                                       rollup_key=rollup_key,
-                                      bucket_start=bucket_start,
+                                      bucket_id=bucket_id,
                                       count=delta)
                 q.execute()
 
@@ -234,7 +234,7 @@ class SQLPersistentStore(object):
         for key in set(inc_variant_conversions) | set(inc_variant_values):
             delta = inc_variant_conversions.get(key, 0)
             value = inc_variant_values.get(key, 0)
-            goal_name, test_name, selected, rollup_key, bucket_start = key
+            goal_name, test_name, selected, rollup_key, bucket_id = key
 
             q = t.update().values(count=t.c.count + delta,
                                   value=t.c.value + value).\
@@ -242,7 +242,7 @@ class SQLPersistentStore(object):
                                t.c.test_name == test_name,
                                t.c.selected == selected,
                                t.c.rollup_key == rollup_key,
-                               t.c.bucket_start == bucket_start))
+                               t.c.bucket_id == bucket_id))
             r = q.execute()
 
             if r.rowcount == 0:
@@ -250,7 +250,7 @@ class SQLPersistentStore(object):
                                       test_name=test_name,
                                       selected=selected,
                                       rollup_key=rollup_key,
-                                      bucket_start=bucket_start,
+                                      bucket_id=bucket_id,
                                       count=delta,
                                       value=value)
                 q.execute()
@@ -264,30 +264,30 @@ class SQLPersistentStore(object):
     def rollback(self):
         return self.engine.rollback()
 
-    def count_conversions(self, name, rollup_key, bucket_start):
+    def count_conversions(self, name, rollup_key, bucket_id):
         t = self.conversion_counts_table
         q = select([t.c.count, t.c.value]).\
                 where(and_(t.c.name == name,
                            t.c.rollup_key == rollup_key,
-                           t.c.bucket_start == bucket_start))
+                           t.c.bucket_id == bucket_id))
         return q.execute().first() or (0, 0)
 
-    def count_impressions(self, name, selected, rollup_key, bucket_start):
+    def count_impressions(self, name, selected, rollup_key, bucket_id):
         t = self.impression_counts_table
         q = select([t.c.count]).\
                 where(and_(t.c.name == name,
                            t.c.selected == selected,
                            t.c.rollup_key == rollup_key,
-                           t.c.bucket_start == bucket_start))
+                           t.c.bucket_id == bucket_id))
         return q.scalar() or 0
 
     def count_variant_conversions(self, goal_name, test_name, selected,
-                                  rollup_key, bucket_start):
+                                  rollup_key, bucket_id):
         t = self.variant_conversion_counts_table
         q = select([t.c.count, t.c.value]).\
                 where(and_(t.c.goal_name == goal_name,
                            t.c.test_name == test_name,
                            t.c.selected == selected,
                            t.c.rollup_key == rollup_key,
-                           t.c.bucket_start == bucket_start))
+                           t.c.bucket_id == bucket_id))
         return q.execute().first() or (0, 0)

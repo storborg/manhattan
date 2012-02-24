@@ -14,11 +14,33 @@ class LocalDayRollup(object):
         dt_local = dt.astimezone(self.tz).replace(tzinfo=None)
         return dt_local.date()
 
-    def bucket_start(self, start_timestamp):
-        return time.mktime(self.start_date_for(start_timestamp).timetuple())
+    def get_bucket(self, timestamp, history):
+        return time.mktime(self.start_date_for(timestamp).timetuple())
 
 
 class AllRollup(object):
 
-    def bucket_start(self, start_timestamp):
+    def get_bucket(self, timestamp, history):
         return 0
+
+
+class BrowserRollup(object):
+
+    def browser_from_user_agent(self, user_agent):
+        # FIXME This is a pretty naive and less useful implementation.
+        if 'Chrome' in user_agent:
+            return u'Chrome'
+        elif 'Safari' in user_agent:
+            return u'Safari'
+        elif 'Firefox' in user_agent:
+            return u'Firefox'
+        elif 'MSIE' in user_agent:
+            return u'IE'
+        else:
+            return u'Unknown'
+
+    def get_bucket(self, timestamp, history):
+        if history.user_agents:
+            return self.browser_from_user_agent(list(history.user_agents)[0])
+        else:
+            return u'Unknown'
