@@ -41,4 +41,5 @@ class BrowserRollup(object):
 
     def get_bucket(self, timestamp, history):
         return (history.user_agents and
-                self.browser_from_user_agent(list(history.user_agents)[0]))
+                self.browser_from_user_agent(list(history.user_agents)[0]) or
+                u'')
