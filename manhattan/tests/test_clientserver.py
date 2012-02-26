@@ -1,5 +1,6 @@
 import code
 import os
+import os.path
 import glob
 import sys
 import time
@@ -9,7 +10,7 @@ from threading import Event, Thread
 
 from sqlalchemy import create_engine
 
-from manhattan.server import Server, main as server_main
+from manhattan.server import Server, main as server_main, logging_config
 from manhattan.client import (ServerError, TimeoutError, Client,
                               main as client_main)
 from manhattan.log.timerotating import TimeRotatingLog
@@ -68,29 +69,39 @@ class TestClientServer(TestCase):
         url = 'mysql://manhattan:quux@localhost/manhattan_test'
         drop_existing_tables(create_engine(url))
 
+        log_path = '/tmp/manhattan-debug.log'
+
         sys.argv = ['manhattan-server',
                     '--url=%s' % url,
-                    '--path=%s' % path]
+                    '--path=%s' % path,
+                    '--log=%s' % log_path]
 
         killed_event = Event()
         th = Thread(target=server_main, args=(killed_event,))
-        th.start()
-
-        # Give the server time to process all the records before querying it.
-        time.sleep(0.5)
-
         orig_interact = code.interact
 
-        def fake_interact(banner, local):
-            client = local['client']
-            self.assertEqual(client.count(u'add to cart'), 5)
-            self.assertEqual(client.count(u'began checkout'), 4)
-            self.assertEqual(client.count(u'viewed page'), 6)
-
-        code.interact = fake_interact
-
         try:
+            th.start()
+
+            # Give the server time to process all the records before querying
+            # it.
+            time.sleep(0.5)
+
+            self.assertTrue(os.path.exists(log_path))
+
+            def fake_interact(banner, local):
+                client = local['client']
+                self.assertEqual(client.count(u'add to cart'), 5)
+                self.assertEqual(client.count(u'began checkout'), 4)
+                self.assertEqual(client.count(u'viewed page'), 6)
+
+            code.interact = fake_interact
+
             client_main()
         finally:
             code.interact = orig_interact
             killed_event.set()
+
+    def test_configure_logging(self):
+        cfg = logging_config(filename=None)
+        self.assertNotIn('root_file', cfg)

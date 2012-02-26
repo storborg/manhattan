@@ -1,4 +1,6 @@
 import logging
+import logging.config
+import sys
 import argparse
 from threading import Thread
 
@@ -50,26 +52,73 @@ class Server(Thread):
         return resp
 
 
+def logging_config(verbose=False, filename=None):
+    handlers = {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stderr,
+            'formatter': 'generic',
+            'level': logging.DEBUG if verbose else logging.WARN,
+        },
+        'null': {
+            'class': 'logging.NullHandler',
+        }
+    }
+
+    if filename:
+        handlers['root_file'] = {
+            'class': 'logging.FileHandler',
+            'formatter': 'generic',
+            'level': 'NOTSET',
+            'filename': filename,
+        }
+
+    return {
+        'version': 1,
+        'formatters': {
+            'generic': {
+                'format':
+                "%(asctime)s %(levelname)-5.5s [%(name)s] %(message)s"
+            },
+        },
+        'handlers': handlers,
+        'loggers': {
+            'manhattan': {
+                'propagate': True,
+                'level': 'NOTSET',
+                'handlers': handlers.keys(),
+            },
+        },
+        'root': {
+            'level': 'DEBUG',
+            'handlers': ['null']
+        }
+    }
+
+
 def main(killed_event=None):
-    p = argparse.ArgumentParser(description='Run a Manhattan worker with a '
-                                'TimeRotatingLog and memory backend.')
-    p.add_argument('-v', '--verbose', dest='loglevel', action='store_const',
-                   const=logging.DEBUG, default=logging.WARN,
-                   help='Print detailed output')
-    p.add_argument('-p', '--path', dest='log_path', type=str,
-                   help='Log path')
+    p = argparse.ArgumentParser(
+        description='Run a Manhattan worker with a TimeRotatingLog.')
+
+    p.add_argument('-v', '--verbose', dest='verbose', action='store_true',
+                   default=False, help='Print detailed output')
+    p.add_argument('-p', '--path', dest='input_log_path', type=str,
+                   help='Input Manhattan log path')
+    p.add_argument('--log', dest='error_log_path', type=str,
+                   help='Path to error/debug log')
     p.add_argument('-u', '--url', dest='url', type=str,
                    help='SQL backend URL')
 
     args = p.parse_args()
 
-    logging.basicConfig(level=args.loglevel)
+    logging.config.dictConfig(logging_config(args.verbose,
+                                             args.error_log_path))
 
     backend = Backend(sqlalchemy_url=args.url)
     manhattan.server_backend = backend
 
-    log = TimeRotatingLog(args.log_path)
-    worker = Worker(log, backend, stats_every=5000)
+    mhlog = TimeRotatingLog(args.input_log_path)
+    worker = Worker(mhlog, backend, stats_every=5000)
 
     server = Server(backend)
     server.start()
