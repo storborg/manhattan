@@ -1,5 +1,3 @@
-import logging
-
 from collections import Counter, defaultdict
 from decimal import Decimal
 
@@ -11,31 +9,12 @@ from .model import VisitorHistory, Test, Goal
 
 from .persistence.sql import SQLPersistentStore
 
-log = logging.getLogger(__name__)
-
 
 default_rollups = {
     'all': AllRollup(),
     'pst_day': LocalDayRollup('America/Los_Angeles'),
     'browser': BrowserRollup(),
 }
-
-
-"""
-NOTES on complex goals:
-
-FIXME turn this into real docs.
-
-complex goals will be recorded only if all of the 'include' goals have been
-satisfied, but none of the 'exclude' goals.
-
-complex goal conversions will be recorded in the rollups that correspond to
-the first .goal() call in which all the ``include`` constraints were satisfied.
-
-specified on the command line as
---complex="abandoned cart|add to cart|began checkout"
---complex="hello|foo,bar,baz|quux"
-"""
 
 
 class Backend(object):

@@ -6,6 +6,10 @@ log = logging.getLogger(__name__)
 
 
 class MemoryLog(object):
+    """
+    An in-memory log, intended for testing only. This log does not support
+    resuming (server crash recovery).
+    """
     def __init__(self):
         self.q = deque()
 

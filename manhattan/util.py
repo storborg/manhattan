@@ -1,10 +1,16 @@
+"""
+Various utility functions used by Manhattan. It is not expected that these will
+be used externally.
+"""
+
 import os
 import random
 import bisect
 
 
 """
-A 1 pixel transparent GIF as a bytestring.
+A 1 pixel transparent GIF as a bytestring. For use as a tracking "beacon" in an
+HTML document.
 """
 transparent_pixel = (
     'GIF89a'

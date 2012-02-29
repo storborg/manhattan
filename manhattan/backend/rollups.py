@@ -1,3 +1,8 @@
+"""
+This module contains some example ``Rollup`` objects, each implementing the
+interface expected by the Manhattan backend for rollup aggregations.
+"""
+
 import time
 from datetime import datetime
 

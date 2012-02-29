@@ -4,6 +4,11 @@ from .text import TextLog
 
 
 class ZeroMQLog(TextLog):
+    """
+    A zeromq-backed log, intended for logging to a manhattan server running on
+    a different host or aggregating multiple web frontend servers to a common
+    backend. This log does not support resuming (server crash recovery).
+    """
     def __init__(self, ctx, mode='w', endpoints=None, stay_alive=True):
         self.ctx = ctx
         self.stay_alive = stay_alive

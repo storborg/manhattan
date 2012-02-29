@@ -7,6 +7,11 @@ from .text import TextLog
 
 
 class TimeRotatingLog(TextLog):
+    """
+    A type of log which writes records as individual lines to a series of
+    files, with one file per hour of time in which events occur. Files are
+    written atomically (using ``fcntl.flock``) and only appended to.
+    """
     sleep_delay = 0.5
 
     def __init__(self, path):
