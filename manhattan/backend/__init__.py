@@ -21,11 +21,29 @@ default_rollups = {
 }
 
 
+"""
+NOTES on complex goals:
+
+FIXME turn this into real docs.
+
+complex goals will be recorded only if all of the 'include' goals have been
+satisfied, but none of the 'exclude' goals.
+
+complex goal conversions will be recorded in the rollups that correspond to
+the first .goal() call in which all the ``include`` constraints were satisfied.
+
+specified on the command line as
+--complex="abandoned cart|add to cart|began checkout"
+--complex="hello|foo,bar,baz|quux"
+"""
+
+
 class Backend(object):
 
-    def __init__(self, sqlalchemy_url, rollups=None,
+    def __init__(self, sqlalchemy_url, rollups=None, complex_goals=None,
                  flush_every=500, cache_size=2000):
         self.rollups = rollups or default_rollups
+        self.complex_goals = complex_goals or []
 
         self.store = store = SQLPersistentStore(sqlalchemy_url)
 
@@ -133,6 +151,33 @@ class Backend(object):
                 history.impression_keys.add(key)
                 self.inc_impressions[key] += 1
 
+    def iter_rollups(self, timestamp, history):
+        for rollup_key, rollup in self.rollups.iteritems():
+            bucket_id = rollup.get_bucket(timestamp, history)
+            yield rollup_key, bucket_id
+
+    def record_complex_goals(self, history, new_name, timestamp):
+        for complex_name, include, exclude in self.complex_goals:
+            # If all goals have now been satisfied in the 'include' set,
+            # trigger a +1 delta on this complex goal in the current
+            # rollups, and track that as a complex goal conversion in this
+            # visitor history.
+            if (new_name in include) and (history.goals >= include):
+                new_keys = []
+                for rollup_key, bucket_id in self.iter_rollups(timestamp,
+                                                               history):
+                    conv_key = (complex_name, rollup_key, bucket_id)
+                    new_keys.append(conv_key)
+                    self.inc_conversions[conv_key] += 1
+                history.complex_keys[complex_name] = new_keys
+
+            # If we are adding the first goal in the 'exclude' set, trigger
+            # a -1 delta for all conversions on that complex goal in the
+            # visitory history.
+            if history.goals & exclude == set([new_name]):
+                for key in history.complex_keys.pop(complex_name, []):
+                    self.inc_conversions[key] -= 1
+
     def record_conversion(self, history, vid, name, timestamp, value=None,
                           value_type='', value_format=''):
         try:
@@ -147,10 +192,15 @@ class Backend(object):
         if value:
             value = Decimal(value)
 
+        if name not in history.goals:
+            history.goals.add(name)
+            # If this is a 'new' goal for this visitor, process complex
+            # conversion goals.
+            self.record_complex_goals(history, name, timestamp)
+
         # Record this goal conversion in appropriate time buckets both on the
         # history object and in the current incremental accumulators.
-        for rollup_key, rollup in self.rollups.iteritems():
-            bucket_id = rollup.get_bucket(timestamp, history)
+        for rollup_key, bucket_id in self.iter_rollups(timestamp, history):
 
             conv_key = (name, rollup_key, bucket_id)
             if conv_key not in history.conversion_keys:

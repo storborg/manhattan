@@ -7,6 +7,19 @@ from manhattan import visitor
 from manhattan.visitor import Visitor
 
 
+test_complex_goals = [
+    (u'abandoned cart', set([u'add to cart']), set([u'began checkout'])),
+    (u'abandoned checkout',
+     set([u'began checkout']), set([u'completed checkout'])),
+    (u'abandoned after validation failure',
+     set([u'began checkout', u'checkout validation failed']),
+     set([u'completed checkout'])),
+    (u'abandoned after payment failure',
+     set([u'began checkout', u'payment failed']),
+     set([u'completed checkout'])),
+]
+
+
 test_clickstream = [
     (10, 'page', 'a', '/'),
     (10, 'page', 'b', '/cheese'),
@@ -35,6 +48,7 @@ test_clickstream = [
     (1950, 'goal', 'bot', 'add to cart', ''),
     (1996, 'page', 'a', '/cart'),
     (1996, 'goal', 'a', 'add to cart', ''),
+    (2043, 'goal', 'b', 'checkout validation failed', ''),
     (2112, 'pixel', 'c'),
     (2196, 'page', 'a', '/cheese/gouda'),
     (2356, 'page', 'a', '/cheese'),
@@ -86,7 +100,8 @@ test_clickstream = [
     (7198, 'page', 'f', '/cheese'),
     (7246, 'split', 'f', 'red checkout form'),
     (7246, 'page', 'f', '/checkout'),
-    (7246, 'goal', 'f', 'began checkout', '')
+    (7246, 'goal', 'f', 'began checkout', ''),
+    (7350, 'goal', 'f', 'payment failed', ''),
 ]
 
 

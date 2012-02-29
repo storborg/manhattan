@@ -71,10 +71,18 @@ class TestClientServer(TestCase):
 
         log_path = '/tmp/manhattan-debug.log'
 
-        sys.argv = ['manhattan-server',
-                    '--url=%s' % url,
-                    '--path=%s' % path,
-                    '--log=%s' % log_path]
+        sys.argv = [
+            'manhattan-server',
+            '--url=%s' % url,
+            '--path=%s' % path,
+            '--log=%s' % log_path,
+            '--complex="abandoned cart|add to cart|began checkout"',
+            '--complex="abandoned checkout|began checkout|completed checkout"',
+            '--complex="abandoned after validation failure|'
+            'began checkout,checkout validation failed|completed checkout"',
+            '--complex="abandoned after payment failure|'
+            'began checkout,payment failed|completed checkout"',
+        ]
 
         killed_event = Event()
         th = Thread(target=server_main, args=(killed_event,))
@@ -94,6 +102,9 @@ class TestClientServer(TestCase):
                 self.assertEqual(client.count(u'add to cart'), 5)
                 self.assertEqual(client.count(u'began checkout'), 4)
                 self.assertEqual(client.count(u'viewed page'), 6)
+                self.assertEqual(client.count(u'abandoned cart'), 1)
+                self.assertEqual(
+                    client.count(u'abandoned after validation failure'), 0)
 
             code.interact = fake_interact
 

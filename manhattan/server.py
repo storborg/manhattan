@@ -96,6 +96,21 @@ def logging_config(verbose=False, filename=None):
     }
 
 
+def parse_names(names):
+    return set(name.decode('ascii').strip() for name in names.split(','))
+
+
+def parse_complex_goals(complex):
+    complex = complex or []
+    configured = []
+    for line in complex:
+        complex_name, include_names, exclude_names = line.strip('"').split('|')
+        include = parse_names(include_names)
+        exclude = parse_names(exclude_names)
+        configured.append((complex_name.decode('ascii'), include, exclude))
+    return configured
+
+
 def main(killed_event=None):
     p = argparse.ArgumentParser(
         description='Run a Manhattan worker with a TimeRotatingLog.')
@@ -108,13 +123,18 @@ def main(killed_event=None):
                    help='Path to error/debug log')
     p.add_argument('-u', '--url', dest='url', type=str,
                    help='SQL backend URL')
+    p.add_argument('-c', '--complex', dest='complex', action='append',
+                   help='Configure complex goal, like '
+                   'name|include a, include b|exclude a')
 
     args = p.parse_args()
 
     logging.config.dictConfig(logging_config(args.verbose,
                                              args.error_log_path))
 
-    backend = Backend(sqlalchemy_url=args.url)
+    complex_goals = parse_complex_goals(args.complex)
+
+    backend = Backend(sqlalchemy_url=args.url, complex_goals=complex_goals)
     manhattan.server_backend = backend
 
     mhlog = TimeRotatingLog(args.input_log_path)

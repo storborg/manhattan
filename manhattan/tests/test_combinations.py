@@ -98,12 +98,26 @@ class TestCombinations(TestCase):
         margin_per_noreds = margin_per_noreds.quantize(Decimal('.01'))
         self.assertEqual(margin_per_noreds, Decimal('7.79'))
 
+        abandoned_carts = backend.count(u'abandoned cart')
+        self.assertEqual(abandoned_carts, 1)
+
+        abandoned_checkouts = backend.count(u'abandoned checkout')
+        self.assertEqual(abandoned_checkouts, 1)
+
+        abandoned_payment = backend.count(u'abandoned after payment failure')
+        self.assertEqual(abandoned_payment, 1)
+
+        abandoned_validation = backend.count(
+            u'abandoned after validation failure')
+        self.assertEqual(abandoned_validation, 0)
+
     def _get_backend(self, reset=False):
         #url = 'mysql://manhattan:quux@localhost/manhattan_test'
         url = 'sqlite:////tmp/manhattan-test.db'
         if reset:
             drop_existing_tables(create_engine(url))
-        return Backend(url, flush_every=2, cache_size=5)
+        return Backend(url, flush_every=2, cache_size=5,
+                       complex_goals=data.test_complex_goals)
 
     def test_resume(self):
         path = '/tmp/manhattan-test-resume'

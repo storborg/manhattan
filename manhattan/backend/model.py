@@ -20,6 +20,10 @@ class VisitorHistory(object):
         # that have already been counted.
         self.variant_conversion_keys = set()
 
+        # Dict mapping complex goal name to a list of previous conversion keys
+        # on that complex goal.
+        self.complex_keys = {}
+
 
 class Test(object):
 
