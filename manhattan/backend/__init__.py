@@ -82,6 +82,7 @@ class Backend(object):
     def handle_nonbot(self, rec, history):
         assert rec.key in ('page', 'goal', 'split')
         ts = int(float(rec.timestamp))
+        site_id = int(rec.site_id)
 
         if rec.key == 'page':
             history.ips.add(rec.ip)
@@ -89,13 +90,15 @@ class Backend(object):
             self.record_conversion(history,
                                    vid=rec.vid,
                                    name=u'viewed page',
-                                   timestamp=ts)
+                                   timestamp=ts,
+                                   site_id=site_id)
 
         elif rec.key == 'goal':
             self.record_conversion(history,
                                    vid=rec.vid,
                                    name=rec.name,
                                    timestamp=ts,
+                                   site_id=site_id,
                                    value=rec.value,
                                    value_type=rec.value_type,
                                    value_format=rec.value_format)
@@ -105,9 +108,11 @@ class Backend(object):
                                    vid=rec.vid,
                                    name=rec.test_name,
                                    selected=rec.selected,
-                                   timestamp=ts)
+                                   timestamp=ts,
+                                   site_id=site_id)
 
-    def record_impression(self, history, vid, name, selected, timestamp):
+    def record_impression(self, history, vid, name, selected, timestamp,
+                          site_id):
         variant = name, selected
         history.variants.add(variant)
 
@@ -125,7 +130,7 @@ class Backend(object):
         # history object and in the current incremental accumulators.
         for rollup_key, rollup in self.rollups.iteritems():
             bucket_id = rollup.get_bucket(timestamp, history)
-            key = (name, selected, rollup_key, bucket_id)
+            key = (name, selected, rollup_key, bucket_id, site_id)
             if key not in history.impression_keys:
                 history.impression_keys.add(key)
                 self.inc_impressions[key] += 1
@@ -135,7 +140,7 @@ class Backend(object):
             bucket_id = rollup.get_bucket(timestamp, history)
             yield rollup_key, bucket_id
 
-    def record_complex_goals(self, history, new_name, timestamp):
+    def record_complex_goals(self, history, new_name, timestamp, site_id):
         for complex_name, include, exclude in self.complex_goals:
             # If all goals have now been satisfied in the 'include' set,
             # trigger a +1 delta on this complex goal in the current
@@ -145,7 +150,7 @@ class Backend(object):
                 new_keys = []
                 for rollup_key, bucket_id in self.iter_rollups(timestamp,
                                                                history):
-                    conv_key = (complex_name, rollup_key, bucket_id)
+                    conv_key = (complex_name, rollup_key, bucket_id, site_id)
                     new_keys.append(conv_key)
                     self.inc_conversions[conv_key] += 1
                 history.complex_keys[complex_name] = new_keys
@@ -157,8 +162,8 @@ class Backend(object):
                 for key in history.complex_keys.pop(complex_name, []):
                     self.inc_conversions[key] -= 1
 
-    def record_conversion(self, history, vid, name, timestamp, value=None,
-                          value_type='', value_format=''):
+    def record_conversion(self, history, vid, name, timestamp, site_id,
+                          value=None, value_type='', value_format=''):
         try:
             goal = self.goals.get(name)
         except KeyError:
@@ -175,13 +180,13 @@ class Backend(object):
             history.goals.add(name)
             # If this is a 'new' goal for this visitor, process complex
             # conversion goals.
-            self.record_complex_goals(history, name, timestamp)
+            self.record_complex_goals(history, name, timestamp, site_id)
 
         # Record this goal conversion in appropriate time buckets both on the
         # history object and in the current incremental accumulators.
         for rollup_key, bucket_id in self.iter_rollups(timestamp, history):
 
-            conv_key = (name, rollup_key, bucket_id)
+            conv_key = (name, rollup_key, bucket_id, site_id)
             if conv_key not in history.conversion_keys:
                 history.conversion_keys.add(conv_key)
                 self.inc_conversions[conv_key] += 1
@@ -189,7 +194,8 @@ class Backend(object):
                 self.inc_values[conv_key] += value
 
             for test_name, selected in history.variants:
-                vc_key = (name, test_name, selected, rollup_key, bucket_id)
+                vc_key = (name, test_name, selected, rollup_key, bucket_id,
+                          site_id)
                 if vc_key not in history.variant_conversion_keys:
                     history.variant_conversion_keys.add(vc_key)
                     self.inc_variant_conversions[vc_key] += 1
@@ -214,35 +220,37 @@ class Backend(object):
         self.store.update_pointer(self.pointer)
         self.store.commit()
 
-    def count(self, goal=None, variant=None, rollup_key='all', bucket_id=0):
+    def count(self, goal=None, variant=None, rollup_key='all', bucket_id=0,
+              site_id=None):
         assert goal or variant, "must specify goal or variant"
 
         if goal and variant:
             test_name, selected = variant
-            key = goal, test_name, selected, rollup_key, bucket_id
+            key = goal, test_name, selected, rollup_key, bucket_id, site_id
             local = self.inc_variant_conversions[key]
             flushed = self.store.count_variant_conversions(*key)[0]
         elif goal:
-            key = goal, rollup_key, bucket_id
+            key = goal, rollup_key, bucket_id, site_id
             local = self.inc_conversions[key]
             flushed = self.store.count_conversions(*key)[0]
         else:
             # variant
             name, selected = variant
-            key = name, selected, rollup_key, bucket_id
+            key = name, selected, rollup_key, bucket_id, site_id
             local = self.inc_impressions[key]
             flushed = self.store.count_impressions(*key)
 
         return local + flushed
 
-    def goal_value(self, goal, variant=None, rollup_key='all', bucket_id=0):
+    def goal_value(self, goal, variant=None, rollup_key='all', bucket_id=0,
+                   site_id=None):
         if variant:
             test_name, selected = variant
-            key = goal, test_name, selected, rollup_key, bucket_id
+            key = goal, test_name, selected, rollup_key, bucket_id, site_id
             local = self.inc_variant_values[key]
             flushed = self.store.count_variant_conversions(*key)[1]
         else:
-            key = goal, rollup_key, bucket_id
+            key = goal, rollup_key, bucket_id, site_id
             local = self.inc_values[key]
             flushed = self.store.count_conversions(*key)[1]
         value = local + Decimal(str(flushed))
@@ -252,8 +260,8 @@ class Backend(object):
             return value
 
         elif goal_obj.value_type == visitor.AVERAGE:
-            return value / self.count(goal, variant)
+            return value / self.count(goal, variant, site_id=site_id)
 
         else:
             # visitor.PER
-            return value / self.count(u'viewed page', variant)
+            return value / self.count(u'viewed page', variant, site_id=site_id)

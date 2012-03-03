@@ -46,9 +46,14 @@ def drop_existing_tables(engine):
 class TestCombinations(TestCase):
 
     def _check_backend_queries(self, backend):
-        self.assertEqual(backend.count(u'add to cart'), 5)
-        self.assertEqual(backend.count(u'began checkout'), 4)
-        self.assertEqual(backend.count(u'viewed page'), 6)
+        self.assertEqual(backend.count(u'add to cart', site_id=1), 5)
+        self.assertEqual(backend.count(u'began checkout', site_id=1), 4)
+        self.assertEqual(backend.count(u'viewed page', site_id=1), 6)
+
+        self.assertEqual(backend.count(u'add to cart', site_id=2), 1)
+        self.assertEqual(backend.count(u'began checkout', site_id=2), 1)
+        self.assertEqual(backend.count(u'completed checkout', site_id=2), 0)
+        self.assertEqual(backend.count(u'viewed page', site_id=2), 1)
 
         #sessions = backend.get_sessions(goal='add to cart')
         #self.assertIn('a', sessions)
@@ -67,48 +72,51 @@ class TestCombinations(TestCase):
         #self.assertIn('b', sessions)
 
         num = backend.count(u'completed checkout',
-                            variant=(u'red checkout form', u'False'))
+                            variant=(u'red checkout form', u'False'),
+                            site_id=1)
         self.assertEqual(num, 3)
 
         #sessions = backend.get_sessions()
         #self.assertEqual(len(sessions), 6)
 
-        revenue = backend.goal_value(u'completed checkout')
+        revenue = backend.goal_value(u'completed checkout', site_id=1)
         self.assertEqual(revenue, Decimal('108.19'))
 
         revenue_nored = backend.goal_value(
             u'completed checkout',
-            variant=(u'red checkout form', u'False'))
+            variant=(u'red checkout form', u'False'), site_id=1)
         self.assertEqual(revenue_nored, Decimal('108.19'))
 
-        noreds = backend.count(variant=(u'red checkout form', u'False'))
+        noreds = backend.count(variant=(u'red checkout form', u'False'),
+                               site_id=1)
         self.assertEqual(noreds, 3)
 
-        margin = backend.goal_value(u'order margin')
+        margin = backend.goal_value(u'order margin', site_id=1)
         margin = margin.quantize(Decimal('.01'))
         self.assertEqual(margin, Decimal('23.47'))
 
-        margin_per = backend.goal_value(u'margin per session')
+        margin_per = backend.goal_value(u'margin per session', site_id=1)
         margin_per = margin_per.quantize(Decimal('.01'))
         self.assertEqual(margin_per, Decimal('3.90'))
 
         margin_per_noreds = backend.goal_value(
             u'margin per session',
-            variant=(u'red checkout form', u'False'))
+            variant=(u'red checkout form', u'False'), site_id=1)
         margin_per_noreds = margin_per_noreds.quantize(Decimal('.01'))
         self.assertEqual(margin_per_noreds, Decimal('7.79'))
 
-        abandoned_carts = backend.count(u'abandoned cart')
+        abandoned_carts = backend.count(u'abandoned cart', site_id=1)
         self.assertEqual(abandoned_carts, 1)
 
-        abandoned_checkouts = backend.count(u'abandoned checkout')
+        abandoned_checkouts = backend.count(u'abandoned checkout', site_id=1)
         self.assertEqual(abandoned_checkouts, 1)
 
-        abandoned_payment = backend.count(u'abandoned after payment failure')
+        abandoned_payment = backend.count(u'abandoned after payment failure',
+                                          site_id=1)
         self.assertEqual(abandoned_payment, 1)
 
         abandoned_validation = backend.count(
-            u'abandoned after validation failure')
+            u'abandoned after validation failure', site_id=1)
         self.assertEqual(abandoned_validation, 0)
 
     def _get_backend(self, reset=False):

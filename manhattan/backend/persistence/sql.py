@@ -69,8 +69,8 @@ class SQLPersistentStore(object):
             self.metadata,
             Column('name', types.String(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
-            Column('bucket_id', types.String(255), primary_key=True,
-                   autoincrement=False),
+            Column('bucket_id', types.String(255), primary_key=True),
+            Column('site_id', types.Integer, primary_key=True),
             Column('count', types.Integer, nullable=False, default=0),
             Column('value', types.Float, nullable=False, default=0),
             mysql_engine='InnoDB')
@@ -81,8 +81,8 @@ class SQLPersistentStore(object):
             Column('name', types.String(255), primary_key=True),
             Column('selected', types.String(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
-            Column('bucket_id', types.String(255), primary_key=True,
-                   autoincrement=False),
+            Column('bucket_id', types.String(255), primary_key=True),
+            Column('site_id', types.Integer, primary_key=True),
             Column('count', types.Integer, nullable=False, default=0),
             mysql_engine='InnoDB')
 
@@ -93,8 +93,8 @@ class SQLPersistentStore(object):
             Column('test_name', types.String(255), primary_key=True),
             Column('selected', types.String(255), primary_key=True),
             Column('rollup_key', types.String(255), primary_key=True),
-            Column('bucket_id', types.String(255), primary_key=True,
-                   autoincrement=False),
+            Column('bucket_id', types.String(255), primary_key=True),
+            Column('site_id', types.Integer, primary_key=True),
             Column('count', types.Integer, nullable=False, default=0),
             Column('value', types.Float, nullable=False, default=0),
             mysql_engine='InnoDB')
@@ -172,25 +172,27 @@ class SQLPersistentStore(object):
         for key in set(inc_conversions) | set(inc_values):
             delta = inc_conversions.get(key, 0)
             value = inc_values.get(key, 0)
-            name, rollup_key, bucket_id = key
+            name, rollup_key, bucket_id, site_id = key
 
             self.put_kv(self.conversion_counts_table,
                         {'name': name,
                          'rollup_key': rollup_key,
-                         'bucket_id': bucket_id},
+                         'bucket_id': bucket_id,
+                         'site_id': site_id},
                         {'count': delta,
                          'value': value},
                         increment=True)
 
     def increment_impression_counters(self, inc_impressions):
         for key, delta in inc_impressions.iteritems():
-            name, selected, rollup_key, bucket_id = key
+            name, selected, rollup_key, bucket_id, site_id = key
 
             self.put_kv(self.impression_counts_table,
                         {'name': name,
                          'selected': selected,
                          'rollup_key': rollup_key,
-                         'bucket_id': bucket_id},
+                         'bucket_id': bucket_id,
+                         'site_id': site_id},
                         {'count': delta},
                         increment=True)
 
@@ -199,14 +201,16 @@ class SQLPersistentStore(object):
         for key in set(inc_variant_conversions) | set(inc_variant_values):
             delta = inc_variant_conversions.get(key, 0)
             value = inc_variant_values.get(key, 0)
-            goal_name, test_name, selected, rollup_key, bucket_id = key
+            goal_name, test_name, selected, \
+                    rollup_key, bucket_id, site_id = key
 
             self.put_kv(self.variant_conversion_counts_table,
                         {'goal_name': goal_name,
                          'test_name': test_name,
                          'selected': selected,
                          'rollup_key': rollup_key,
-                         'bucket_id': bucket_id},
+                         'bucket_id': bucket_id,
+                         'site_id': site_id},
                         {'count': delta,
                          'value': value},
                         increment=True)
@@ -245,31 +249,35 @@ class SQLPersistentStore(object):
         value_type, value_format = r
         return Goal(value_type=value_type, value_format=value_format)
 
-    def count_conversions(self, name, rollup_key, bucket_id):
+    def count_conversions(self, name, rollup_key, bucket_id, site_id):
         return self.get_kv(self.conversion_counts_table,
                            ['count', 'value'],
                            {'name': name,
                             'rollup_key': rollup_key,
-                            'bucket_id': bucket_id},
+                            'bucket_id': bucket_id,
+                            'site_id': site_id},
                            default=(0, 0))
 
-    def count_impressions(self, name, selected, rollup_key, bucket_id):
+    def count_impressions(self, name, selected, rollup_key, bucket_id,
+                          site_id):
         r = self.get_kv(self.impression_counts_table,
                         ['count'],
                         {'name': name,
                          'selected': selected,
                          'rollup_key': rollup_key,
-                         'bucket_id': bucket_id},
+                         'bucket_id': bucket_id,
+                         'site_id': site_id},
                         default=(0,))
         return r[0]
 
     def count_variant_conversions(self, goal_name, test_name, selected,
-                                  rollup_key, bucket_id):
+                                  rollup_key, bucket_id, site_id):
         return self.get_kv(self.variant_conversion_counts_table,
                            ['count', 'value'],
                            {'goal_name': goal_name,
                             'test_name': test_name,
                             'selected': selected,
                             'rollup_key': rollup_key,
-                            'bucket_id': bucket_id},
+                            'bucket_id': bucket_id,
+                            'site_id': site_id},
                            default=(0, 0))

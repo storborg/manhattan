@@ -99,12 +99,13 @@ class TestClientServer(TestCase):
 
             def fake_interact(banner, local):
                 client = local['client']
-                self.assertEqual(client.count(u'add to cart'), 5)
-                self.assertEqual(client.count(u'began checkout'), 4)
-                self.assertEqual(client.count(u'viewed page'), 6)
-                self.assertEqual(client.count(u'abandoned cart'), 1)
+                self.assertEqual(client.count(u'add to cart', site_id=1), 5)
+                self.assertEqual(client.count(u'began checkout', site_id=1), 4)
+                self.assertEqual(client.count(u'viewed page', site_id=1), 6)
+                self.assertEqual(client.count(u'abandoned cart', site_id=1), 1)
                 self.assertEqual(
-                    client.count(u'abandoned after validation failure'), 0)
+                    client.count(u'abandoned after validation failure',
+                                 site_id=1), 0)
 
             code.interact = fake_interact
 
