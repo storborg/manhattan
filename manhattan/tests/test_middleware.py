@@ -21,7 +21,7 @@ class SampleApp(object):
             resp.content_type = 'text/plain'
         elif req.path_info.endswith('.iter'):
             resp = Response()
-            s = 'Hello %s' % req.path_info
+            s = 'Hello %s' % req.path_info.encode('ascii')
 
             def app_iter(sample):
                 for piece in ('<html><body>', sample, '</body>', '</html>'):
