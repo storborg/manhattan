@@ -24,7 +24,6 @@ class ManhattanMiddleware(object):
                 yield chunk.replace('</body>', '%s</body>' % tag)
 
         resp.app_iter = wrap_iter(resp.app_iter)
-        resp.content_length = None
 
     def handle_pixel(self, visitor, fresh):
         if not fresh:
