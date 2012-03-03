@@ -113,69 +113,55 @@ class SQLPersistentStore(object):
     def get_pointer(self):
         return select([self.pointer_table.c.pointer]).scalar()
 
-    def get_visitor_history(self, vid):
-        t = self.history_table
-        r = select([t.c.history]).where(t.c.vid == vid).scalar()
-        if r:
-            return r
+    def begin(self):
+        return self.engine.begin()
+
+    def commit(self):
+        return self.engine.commit()
+
+    def criteria_from_dict(self, table, key_dict):
+        criteria = []
+        for col, val in key_dict.iteritems():
+            criteria.append(getattr(table.c, col) == val)
+        if len(criteria) > 1:
+            return and_(*criteria)
         else:
-            raise KeyError
+            return criteria[0]
+
+    def put_kv(self, table, key_dict, value_dict, increment=False):
+        whereclause = self.criteria_from_dict(table, key_dict)
+
+        if increment:
+            update_dict = {}
+            for col, val in value_dict.iteritems():
+                update_dict[col] = getattr(table.c, col) + val
+        else:
+            update_dict = value_dict
+
+        q = table.update().values(**update_dict).where(whereclause)
+        r = q.execute()
+        if r.rowcount == 0:
+            value_dict.update(key_dict)
+            q = table.insert().values(**value_dict)
+            q.execute()
 
     def put_visitor_history(self, histories):
-        t = self.history_table
         for vid, history in histories.iteritems():
-            q = t.update().values(history=history).where(t.c.vid == vid)
-            r = q.execute()
-            if r.rowcount == 0:
-                q = t.insert().values(vid=vid, history=history)
-                q.execute()
-
-    def get_test(self, name):
-        t = self.tests_table
-        r = select([t.c.first_timestamp, t.c.last_timestamp]).\
-                where(t.c.name == name).execute().first()
-        if r:
-            first, last = r
-            return Test(first_timestamp=first,
-                        last_timestamp=last)
-        else:
-            raise KeyError
+            self.put_kv(self.history_table, {'vid': vid}, {'history': history})
 
     def put_test(self, tests):
-        t = self.tests_table
         for name, test in tests.iteritems():
-            q = t.update().values(first_timestamp=test.first_timestamp,
-                                  last_timestamp=test.last_timestamp).\
-                    where(t.c.name == name)
-            r = q.execute()
-            if r.rowcount == 0:
-                q = t.insert().values(name=name,
-                                      first_timestamp=test.first_timestamp,
-                                      last_timestamp=test.last_timestamp)
-                q.execute()
-
-    def get_goal(self, name):
-        t = self.goal_table
-        r = select([t.c.value_type, t.c.value_format]).\
-                where(t.c.name == name).execute().first()
-        if r:
-            value_type, value_format = r
-            return Goal(value_type=value_type, value_format=value_format)
-        else:
-            raise KeyError
+            self.put_kv(self.tests_table,
+                        {'name': name},
+                        {'first_timestamp': test.first_timestamp,
+                         'last_timestamp': test.last_timestamp})
 
     def put_goal(self, goals):
-        t = self.goal_table
         for name, goal in goals.iteritems():
-            q = t.update().values(value_type=goal.value_type,
-                                  value_format=goal.value_format).\
-                    where(t.c.name == name)
-            r = q.execute()
-            if r.rowcount == 0:
-                q = t.insert().values(name=name,
-                                      value_type=goal.value_type,
-                                      value_format=goal.value_format)
-                q.execute()
+            self.put_kv(self.goal_table,
+                        {'name': name},
+                        {'value_type': goal.value_type,
+                         'value_format': goal.value_format})
 
     def increment_conversion_counters(self, inc_conversions, inc_values):
         """
@@ -183,104 +169,107 @@ class SQLPersistentStore(object):
         tuples of (integer counts, Decimal values), adjust the state of the
         counts in the SQL database.
         """
-        t = self.conversion_counts_table
         for key in set(inc_conversions) | set(inc_values):
             delta = inc_conversions.get(key, 0)
             value = inc_values.get(key, 0)
             name, rollup_key, bucket_id = key
 
-            q = t.update().values(count=t.c.count + delta,
-                                  value=t.c.value + value).\
-                    where(and_(t.c.name == name,
-                               t.c.rollup_key == rollup_key,
-                               t.c.bucket_id == bucket_id))
-            r = q.execute()
-
-            if r.rowcount == 0:
-                q = t.insert().values(name=name,
-                                      rollup_key=rollup_key,
-                                      bucket_id=bucket_id,
-                                      count=delta,
-                                      value=value)
-                q.execute()
+            self.put_kv(self.conversion_counts_table,
+                        {'name': name,
+                         'rollup_key': rollup_key,
+                         'bucket_id': bucket_id},
+                        {'count': delta,
+                         'value': value},
+                        increment=True)
 
     def increment_impression_counters(self, inc_impressions):
-        t = self.impression_counts_table
         for key, delta in inc_impressions.iteritems():
             name, selected, rollup_key, bucket_id = key
 
-            q = t.update().values(count=t.c.count + delta).\
-                    where(and_(t.c.name == name,
-                               t.c.selected == selected,
-                               t.c.rollup_key == rollup_key,
-                               t.c.bucket_id == bucket_id))
-            r = q.execute()
-
-            if r.rowcount == 0:
-                q = t.insert().values(name=name,
-                                      selected=selected,
-                                      rollup_key=rollup_key,
-                                      bucket_id=bucket_id,
-                                      count=delta)
-                q.execute()
+            self.put_kv(self.impression_counts_table,
+                        {'name': name,
+                         'selected': selected,
+                         'rollup_key': rollup_key,
+                         'bucket_id': bucket_id},
+                        {'count': delta},
+                        increment=True)
 
     def increment_variant_conversion_counters(self, inc_variant_conversions,
                                               inc_variant_values):
-        t = self.variant_conversion_counts_table
         for key in set(inc_variant_conversions) | set(inc_variant_values):
             delta = inc_variant_conversions.get(key, 0)
             value = inc_variant_values.get(key, 0)
             goal_name, test_name, selected, rollup_key, bucket_id = key
 
-            q = t.update().values(count=t.c.count + delta,
-                                  value=t.c.value + value).\
-                    where(and_(t.c.goal_name == goal_name,
-                               t.c.test_name == test_name,
-                               t.c.selected == selected,
-                               t.c.rollup_key == rollup_key,
-                               t.c.bucket_id == bucket_id))
-            r = q.execute()
+            self.put_kv(self.variant_conversion_counts_table,
+                        {'goal_name': goal_name,
+                         'test_name': test_name,
+                         'selected': selected,
+                         'rollup_key': rollup_key,
+                         'bucket_id': bucket_id},
+                        {'count': delta,
+                         'value': value},
+                        increment=True)
 
-            if r.rowcount == 0:
-                q = t.insert().values(goal_name=goal_name,
-                                      test_name=test_name,
-                                      selected=selected,
-                                      rollup_key=rollup_key,
-                                      bucket_id=bucket_id,
-                                      count=delta,
-                                      value=value)
-                q.execute()
+    def get_kv(self, table, get_cols, key_dict, default=None):
+        to_select = [getattr(table.c, col) for col in get_cols]
+        whereclause = self.criteria_from_dict(table, key_dict)
 
-    def begin(self):
-        return self.engine.begin()
+        r = select(to_select).where(whereclause).execute().first()
+        if r:
+            return r
+        else:
+            if default:
+                return default
+            else:
+                raise KeyError
 
-    def commit(self):
-        return self.engine.commit()
+    def get_visitor_history(self, vid):
+        r = self.get_kv(self.history_table,
+                        ['history'],
+                        {'vid': vid})
+        return r[0]
+
+    def get_test(self, name):
+        r = self.get_kv(self.tests_table,
+                        ['first_timestamp', 'last_timestamp'],
+                        {'name': name})
+        first, last = r
+        return Test(first_timestamp=first,
+                    last_timestamp=last)
+
+    def get_goal(self, name):
+        r = self.get_kv(self.goal_table,
+                        ['value_type', 'value_format'],
+                        {'name': name})
+        value_type, value_format = r
+        return Goal(value_type=value_type, value_format=value_format)
 
     def count_conversions(self, name, rollup_key, bucket_id):
-        t = self.conversion_counts_table
-        q = select([t.c.count, t.c.value]).\
-                where(and_(t.c.name == name,
-                           t.c.rollup_key == rollup_key,
-                           t.c.bucket_id == bucket_id))
-        return q.execute().first() or (0, 0)
+        return self.get_kv(self.conversion_counts_table,
+                           ['count', 'value'],
+                           {'name': name,
+                            'rollup_key': rollup_key,
+                            'bucket_id': bucket_id},
+                           default=(0, 0))
 
     def count_impressions(self, name, selected, rollup_key, bucket_id):
-        t = self.impression_counts_table
-        q = select([t.c.count]).\
-                where(and_(t.c.name == name,
-                           t.c.selected == selected,
-                           t.c.rollup_key == rollup_key,
-                           t.c.bucket_id == bucket_id))
-        return q.scalar() or 0
+        r = self.get_kv(self.impression_counts_table,
+                        ['count'],
+                        {'name': name,
+                         'selected': selected,
+                         'rollup_key': rollup_key,
+                         'bucket_id': bucket_id},
+                        default=(0,))
+        return r[0]
 
     def count_variant_conversions(self, goal_name, test_name, selected,
                                   rollup_key, bucket_id):
-        t = self.variant_conversion_counts_table
-        q = select([t.c.count, t.c.value]).\
-                where(and_(t.c.goal_name == goal_name,
-                           t.c.test_name == test_name,
-                           t.c.selected == selected,
-                           t.c.rollup_key == rollup_key,
-                           t.c.bucket_id == bucket_id))
-        return q.execute().first() or (0, 0)
+        return self.get_kv(self.variant_conversion_counts_table,
+                           ['count', 'value'],
+                           {'goal_name': goal_name,
+                            'test_name': test_name,
+                            'selected': selected,
+                            'rollup_key': rollup_key,
+                            'bucket_id': bucket_id},
+                           default=(0, 0))
