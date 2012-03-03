@@ -1,7 +1,8 @@
 import types
 import os
-import glob
+import os.path
 import time
+import shutil
 
 from unittest import TestCase
 from threading import Thread
@@ -35,27 +36,22 @@ class TimeRotatingLogTest(TestCase):
 
     def setUp(self):
         # Flush any old log files.
-        for path in ('/tmp/manhattan-test-trl-basic',
-                     '/tmp/manhattan-test-trl-mult',
-                     '/tmp/manhattan-test-trl-unicode',
-                     '/tmp/manhattan-test-trl-resume',
-                     '/tmp/manhattan-test-trl-stayalive',
-                     '/tmp/manhattan-test-trl-stayalive-mult'):
-            for fn in glob.glob('%s.[0-9]*' % path):
-                os.remove(fn)
+        dirpath = '/tmp/manhattan-test'
+        if os.path.exists(dirpath):
+            shutil.rmtree(dirpath)
 
     def test_basic(self):
-        log_w = TimeRotatingLog('/tmp/manhattan-test-trl-basic')
+        log_w = TimeRotatingLog('/tmp/manhattan-test/trl-basic')
         log_w.write(PageRecord(url='/foo').to_list())
 
-        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-basic')
+        log_r = TimeRotatingLog('/tmp/manhattan-test/trl-basic')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 1)
         rec = Record.from_list(records[0][0])
         self.assertEqual(rec.url, '/foo')
 
     def test_multiple_logs(self):
-        log_w = TimeRotatingLog('/tmp/manhattan-test-trl-mult')
+        log_w = TimeRotatingLog('/tmp/manhattan-test/trl-mult')
 
         set_fake_name(log_w, '001')
         log_w.write(PageRecord(url='/foo').to_list())
@@ -63,21 +59,21 @@ class TimeRotatingLogTest(TestCase):
         set_fake_name(log_w, '004')
         log_w.write(PageRecord(url='/bar').to_list())
 
-        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-mult')
+        log_r = TimeRotatingLog('/tmp/manhattan-test/trl-mult')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 2)
         self.assertEqual(Record.from_list(records[0][0]).url, '/foo')
         self.assertEqual(Record.from_list(records[1][0]).url, '/bar')
 
     def test_stay_alive_single(self):
-        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
+        log_r = TimeRotatingLog('/tmp/manhattan-test/trl-stayalive')
         log_r.sleep_delay = 0.001
         consumed, consumer, _ = make_thread_consumer(log_r)
 
         try:
             self.assertEqual(len(consumed), 0)
 
-            log_w = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
+            log_w = TimeRotatingLog('/tmp/manhattan-test/trl-stayalive')
 
             log_w.write(PageRecord(url='/baz').to_list())
             time.sleep(log_r.sleep_delay * 10)
@@ -94,14 +90,14 @@ class TimeRotatingLogTest(TestCase):
             log_r.killed.set()
 
     def test_stay_alive_multiple(self):
-        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
+        log_r = TimeRotatingLog('/tmp/manhattan-test/trl-stayalive')
         log_r.sleep_delay = 0.001
         consumed, consumer, _ = make_thread_consumer(log_r)
 
         try:
             self.assertEqual(len(consumed), 0)
 
-            log_w = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive')
+            log_w = TimeRotatingLog('/tmp/manhattan-test/trl-stayalive')
 
             set_fake_name(log_w, '357')
             log_w.write(PageRecord(url='/baz').to_list())
@@ -120,13 +116,13 @@ class TimeRotatingLogTest(TestCase):
             log_r.killed.set()
 
     def test_stay_alive_nofiles(self):
-        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-stayalive-none')
+        log_r = TimeRotatingLog('/tmp/manhattan-test/trl-stayalive-none')
         log_r.sleep_delay = 0.001
         consumed, consumer, _ = make_thread_consumer(log_r)
         log_r.killed.set()
 
     def test_unicode_names(self):
-        log_w = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
+        log_w = TimeRotatingLog('/tmp/manhattan-test/trl-unicode')
         goal_name = u'Goo\xf6aa\xe1llll!!!'
         rec = GoalRecord(name=goal_name,
                          value='',
@@ -134,17 +130,17 @@ class TimeRotatingLogTest(TestCase):
                          value_format='')
         log_w.write(rec.to_list())
 
-        log_r = TimeRotatingLog('/tmp/manhattan-test-trl-unicode')
+        log_r = TimeRotatingLog('/tmp/manhattan-test/trl-unicode')
         records = list(log_r.process(stay_alive=False))
         self.assertEqual(len(records), 1)
         rec = Record.from_list(records[0][0])
         self.assertEqual(rec.name, goal_name)
 
     def test_resume(self):
-        log_w = TimeRotatingLog('/tmp/manhattan-test-trl-resume')
+        log_w = TimeRotatingLog('/tmp/manhattan-test/trl-resume')
 
         # Create a thread consumer
-        log_r1 = TimeRotatingLog('/tmp/manhattan-test-trl-resume')
+        log_r1 = TimeRotatingLog('/tmp/manhattan-test/trl-resume')
 
         consumed, consumer, ptr_container = make_thread_consumer(log_r1)
 
@@ -169,7 +165,7 @@ class TimeRotatingLogTest(TestCase):
             log_w.write(PageRecord(url='/derp').to_list())
             time.sleep(log_r1.sleep_delay * 10)
             # Create a new thread consumer
-            log_r2 = TimeRotatingLog('/tmp/manhattan-test-trl-resume')
+            log_r2 = TimeRotatingLog('/tmp/manhattan-test/trl-resume')
             consumed, consumer, _ = \
                     make_thread_consumer(log_r2, process_from=last_pointer)
             time.sleep(log_r2.sleep_delay * 10)

@@ -1,3 +1,5 @@
+import os
+import os.path
 import time
 import glob
 from fcntl import flock, LOCK_EX, LOCK_UN
@@ -19,6 +21,11 @@ class TimeRotatingLog(TextLog):
         self.current_log_name = None
         self.killed = Event()
 
+    def create_dirs(self):
+        dirpath = os.path.dirname(self.path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
     def log_name_for(self, ts):
         ts = int(ts)
         start = ts - (ts % 3600)
@@ -28,6 +35,7 @@ class TimeRotatingLog(TextLog):
         check_log_name = self.log_name_for(time.time())
         if check_log_name != self.current_log_name:
             self.current_log_name = check_log_name
+            self.create_dirs()
             self.f = open(self.current_log_name, 'ab')
 
         record = self.format(elements)
