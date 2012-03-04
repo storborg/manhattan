@@ -55,29 +55,10 @@ class TestCombinations(TestCase):
         self.assertEqual(backend.count(u'completed checkout', site_id=2), 0)
         self.assertEqual(backend.count(u'viewed page', site_id=2), 1)
 
-        #sessions = backend.get_sessions(goal='add to cart')
-        #self.assertIn('a', sessions)
-        #self.assertIn('b', sessions)
-        #self.assertNotIn('c', sessions)
-
-        #sessions = backend.get_sessions(
-        #    goal='completed checkout',
-        #    variant=('red checkout form', 'False'))
-        #self.assertEqual(len(sessions), 1)
-        #self.assertIn('b', sessions)
-
-        #sessions = backend.get_sessions(
-        #    variant=('red checkout form', 'False'))
-        #self.assertEqual(len(sessions), 1)
-        #self.assertIn('b', sessions)
-
         num = backend.count(u'completed checkout',
                             variant=(u'red checkout form', u'False'),
                             site_id=1)
         self.assertEqual(num, 3)
-
-        #sessions = backend.get_sessions()
-        #self.assertEqual(len(sessions), 6)
 
         revenue = backend.goal_value(u'completed checkout', site_id=1)
         self.assertEqual(revenue, Decimal('108.19'))
