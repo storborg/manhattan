@@ -1,11 +1,9 @@
 import code
 import os
 import os.path
-import glob
 import sys
 import time
 
-from unittest import TestCase
 from threading import Event, Thread
 
 from sqlalchemy import create_engine
@@ -16,6 +14,7 @@ from manhattan.client import (ServerError, TimeoutError, Client,
 from manhattan.log.timerotating import TimeRotatingLog
 
 from . import data
+from .base import BaseTest, work_path
 from .test_combinations import drop_existing_tables
 
 
@@ -31,7 +30,7 @@ class MockBackend(object):
         raise ValueError('sad')
 
 
-class TestClientServer(TestCase):
+class TestClientServer(BaseTest):
 
     def test_basic(self):
         backend = MockBackend()
@@ -58,10 +57,7 @@ class TestClientServer(TestCase):
             client.foo()
 
     def test_clientserver_executable(self):
-        path = '/tmp/manhattan-test-timelog'
-        fnames = glob.glob('%s.[0-9]*' % path)
-        for fname in fnames:
-            os.remove(fname)
+        path = work_path('clientserver-executable')
 
         log = TimeRotatingLog(path)
         data.run_clickstream(log)
@@ -69,7 +65,7 @@ class TestClientServer(TestCase):
         url = 'mysql://manhattan:quux@localhost/manhattan_test'
         drop_existing_tables(create_engine(url))
 
-        log_path = '/tmp/manhattan-debug.log'
+        log_path = work_path('debug.log')
 
         sys.argv = [
             'manhattan-server',

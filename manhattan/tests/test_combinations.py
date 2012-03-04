@@ -1,8 +1,5 @@
 import logging
 
-import os
-import glob
-from unittest import TestCase
 from decimal import Decimal
 
 from sqlalchemy import MetaData, create_engine
@@ -30,6 +27,7 @@ from manhattan.log.timerotating import TimeRotatingLog
 from manhattan.backend import Backend
 
 from . import data
+from .base import BaseTest, work_path
 
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
@@ -43,7 +41,7 @@ def drop_existing_tables(engine):
         table.drop(bind=engine)
 
 
-class TestCombinations(TestCase):
+class TestCombinations(BaseTest):
 
     def _check_backend_queries(self, backend):
         self.assertEqual(backend.count(u'add to cart', site_id=1), 5)
@@ -109,10 +107,7 @@ class TestCombinations(TestCase):
                        complex_goals=data.test_complex_goals)
 
     def test_resume(self):
-        path = '/tmp/manhattan-test-resume'
-        fnames = glob.glob('%s.[0-9]*' % path)
-        for fname in fnames:
-            os.remove(fname)
+        path = work_path('resume')
 
         backend = self._get_backend(reset=True)
 
@@ -139,10 +134,7 @@ class TestCombinations(TestCase):
         self._check_backend_queries(backend)
 
     def test_basic(self):
-        path = '/tmp/manhattan-test-basic'
-        fnames = glob.glob('%s.[0-9]*' % path)
-        for fname in fnames:
-            os.remove(fname)
+        path = work_path('basic')
 
         backend = self._get_backend(reset=True)
 

@@ -1,5 +1,4 @@
 import re
-
 from unittest import TestCase
 
 from webob import Request, Response
