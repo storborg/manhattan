@@ -58,7 +58,7 @@ class TimeRotatingLog(TextLog):
             fnames.sort()
 
             # Crop fnames to start at ``start_file`` if it is supplied.
-            if start_file:
+            if start_file and (start_file in fnames):
                 fnames = fnames[fnames.index(start_file):]
 
             fresh_files = False
