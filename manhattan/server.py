@@ -111,6 +111,14 @@ def parse_complex_goals(complex):
     return configured
 
 
+def load_args_config(args):
+    return dict(verbose=args.verbose,
+                error_log_path=args.error_log_path,
+                complex_goals=parse_complex_goals(args.complex),
+                sqlalchemy_url=args.url,
+                input_log_path=args.input_log_path)
+
+
 def main(killed_event=None):
     p = argparse.ArgumentParser(
         description='Run a Manhattan worker with a TimeRotatingLog.')
@@ -129,15 +137,16 @@ def main(killed_event=None):
 
     args = p.parse_args()
 
-    logging.config.dictConfig(logging_config(args.verbose,
-                                             args.error_log_path))
+    config = load_args_config(args)
 
-    complex_goals = parse_complex_goals(args.complex)
+    logging.config.dictConfig(logging_config(config.pop('verbose'),
+                                             config.pop('error_log_path')))
 
-    backend = Backend(sqlalchemy_url=args.url, complex_goals=complex_goals)
+    input_log_path = config.pop('input_log_path')
+    backend = Backend(**config)
     manhattan.server_backend = backend
 
-    mhlog = TimeRotatingLog(args.input_log_path)
+    mhlog = TimeRotatingLog(input_log_path)
     worker = Worker(mhlog, backend, stats_every=5000)
 
     server = Server(backend)
