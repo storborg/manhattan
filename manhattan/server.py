@@ -2,10 +2,11 @@ import logging
 import logging.config
 import sys
 import argparse
-from threading import Thread
 
-import zmq
-from zmq.eventloop import ioloop
+from gevent import monkey, Greenlet
+monkey.patch_all()
+
+from gevent_zeromq import zmq
 
 import manhattan
 from manhattan.worker import Worker
@@ -15,29 +16,25 @@ from manhattan.backend import Backend
 log = logging.getLogger(__name__)
 
 
-loop = ioloop.IOLoop.instance()
 ctx = zmq.Context()
 
 
-class Server(Thread):
+class Server(Greenlet):
 
     def __init__(self, backend, bind='tcp://127.0.0.1:5555'):
-        Thread.__init__(self)
+        Greenlet.__init__(self)
         self.backend = backend
         self.bind = bind
 
-    def run(self):
+    def _run(self):
         s = ctx.socket(zmq.REP)
         s.bind(self.bind)
-        loop.add_handler(s, self.handle_zmq, zmq.POLLIN)
-        loop.start()
+        while True:
+            self.handle_client(s)
 
-    def kill(self):
-        loop.stop()
-
-    def handle_zmq(self, sock, events):
+    def handle_client(self, sock):
+        req = sock.recv_json()
         try:
-            req = sock.recv_json()
             resp = self.handle(req)
             msg = ['ok', resp]
         except Exception as e:

@@ -2,6 +2,8 @@ import time
 import logging
 import logging.config
 
+import gevent
+
 from .record import Record
 
 
@@ -50,6 +52,7 @@ class Worker(object):
 
         for ii, (vals, pointer) in enumerate(self.log.process(**kwargs)):
             record = Record.from_list(vals)
+            gevent.sleep(0)
             self.backend.handle(record, pointer)
             if (ii % self.stats_every) == 0:
                 self.dump_stats(ii, int(float(record.timestamp)))

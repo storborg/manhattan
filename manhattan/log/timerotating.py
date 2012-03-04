@@ -5,6 +5,8 @@ import glob
 from fcntl import flock, LOCK_EX, LOCK_UN
 from threading import Event
 
+import gevent
+
 from .text import TextLog
 
 
@@ -71,7 +73,7 @@ class TimeRotatingLog(TextLog):
                 if fnames:
                     yield fnames[-1]
                 elif not self.killed.is_set():
-                    time.sleep(self.sleep_delay)
+                    gevent.sleep(self.sleep_delay)
                 else:
                     break
 
@@ -98,7 +100,7 @@ class TimeRotatingLog(TextLog):
                     this_file = next_file
                     f = open(this_file, 'rb')
                 elif not self.killed.is_set():
-                    time.sleep(self.sleep_delay)
+                    gevent.sleep(self.sleep_delay)
                     f.seek(start)
                 else:
                     break

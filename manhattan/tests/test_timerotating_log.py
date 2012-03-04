@@ -1,11 +1,11 @@
 import types
 import os
 import os.path
-import time
 import shutil
 
 from unittest import TestCase
-from threading import Thread
+
+import gevent
 
 from manhattan.record import Record, PageRecord, GoalRecord
 from manhattan.log.timerotating import TimeRotatingLog
@@ -27,8 +27,7 @@ def make_thread_consumer(log_r, process_from=None):
             consumed.append(Record.from_list(rec))
             last_pointer_container[0] = ptr
 
-    consumer = Thread(target=consume, args=(log_r,))
-    consumer.start()
+    consumer = gevent.spawn(consume, log_r)
     return consumed, consumer, last_pointer_container
 
 
@@ -76,13 +75,13 @@ class TimeRotatingLogTest(TestCase):
             log_w = TimeRotatingLog('/tmp/manhattan-test/trl-stayalive')
 
             log_w.write(PageRecord(url='/baz').to_list())
-            time.sleep(log_r.sleep_delay * 10)
+            gevent.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 1)
             self.assertEqual(consumed[0].url, '/baz')
 
             log_w.write(PageRecord(url='/herp').to_list())
-            time.sleep(log_r.sleep_delay * 10)
+            gevent.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 2)
             self.assertEqual(consumed[1].url, '/herp')
@@ -101,14 +100,14 @@ class TimeRotatingLogTest(TestCase):
 
             set_fake_name(log_w, '357')
             log_w.write(PageRecord(url='/baz').to_list())
-            time.sleep(log_r.sleep_delay * 10)
+            gevent.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 1)
             self.assertEqual(consumed[0].url, '/baz')
 
             set_fake_name(log_w, '358')
             log_w.write(PageRecord(url='/herp').to_list())
-            time.sleep(log_r.sleep_delay * 10)
+            gevent.sleep(log_r.sleep_delay * 10)
 
             self.assertEqual(len(consumed), 2)
             self.assertEqual(consumed[1].url, '/herp')
@@ -147,7 +146,7 @@ class TimeRotatingLogTest(TestCase):
         try:
             # Write one record
             log_w.write(PageRecord(url='/herp').to_list())
-            time.sleep(log_r1.sleep_delay * 10)
+            gevent.sleep(log_r1.sleep_delay * 10)
             # Check that one record was read.
             self.assertEqual(len(consumed), 1)
             self.assertEqual(consumed[0].url, '/herp')
@@ -155,7 +154,7 @@ class TimeRotatingLogTest(TestCase):
             # Kill the thread
             log_r1.killed.set()
             # Wait for it to die.
-            time.sleep(log_r1.sleep_delay * 10)
+            gevent.sleep(log_r1.sleep_delay * 10)
 
         last_pointer = ptr_container[0]
         self.assertIsNotNone(last_pointer)
@@ -163,12 +162,12 @@ class TimeRotatingLogTest(TestCase):
         try:
             # Write one record
             log_w.write(PageRecord(url='/derp').to_list())
-            time.sleep(log_r1.sleep_delay * 10)
+            gevent.sleep(log_r1.sleep_delay * 10)
             # Create a new thread consumer
             log_r2 = TimeRotatingLog('/tmp/manhattan-test/trl-resume')
             consumed, consumer, _ = \
                     make_thread_consumer(log_r2, process_from=last_pointer)
-            time.sleep(log_r2.sleep_delay * 10)
+            gevent.sleep(log_r2.sleep_delay * 10)
             # Check that the second record was read.
             self.assertEqual(len(consumed), 1)
             self.assertEqual(consumed[0].url, '/derp')

@@ -1,14 +1,10 @@
-import zmq
+from gevent_zeromq import zmq
 import code
 
 ctx = zmq.Context()
 
 
 class ServerError(Exception):
-    pass
-
-
-class TimeoutError(Exception):
     pass
 
 
@@ -19,9 +15,6 @@ class Client(object):
         self.sock.setsockopt(zmq.LINGER, 0)
         self.sock.connect(connect)
 
-        self.poller = zmq.Poller()
-        self.poller.register(self.sock, zmq.POLLIN)
-
         self.wait = wait
 
     def __getattr__(self, name):
@@ -29,15 +22,11 @@ class Client(object):
             req = [name, args, kwargs]
             self.sock.send_json(req)
 
-            if self.poller.poll(self.wait):
-                status, resp = self.sock.recv_json()
-                if status == 'ok':
-                    return resp
-                else:
-                    raise ServerError(resp)
+            status, resp = self.sock.recv_json()
+            if status == 'ok':
+                return resp
             else:
-                raise TimeoutError('Timed out after %d ms waiting for reply' %
-                                  self.wait)
+                raise ServerError(resp)
         return rpc_method
 
 
