@@ -184,6 +184,18 @@ processes with just:
 
 For more sophisticated production analytics there are two important features:
 
+#### Site Specific Analysis ####
+
+Manhattan can be deployed in an app that handles multiple domains. By default, all data will be aggregated together. If desired, data can be aggregated by site using a ``host_map`` passed to ``ManhattanMiddleware``. The host map is simply a dict mapping the host component of the HTTP URL to an integer site_id, for example:
+
+    host_map = {
+        'foo.com': 1,
+        'bar.com': 2,
+        'baz.example.edu': 3
+    }
+    app = ManhattanMiddleware(app, log, host_map=host_map)
+
+
 #### Configurable Rollups ####
 
 Configurable rollups allow the specification of aggregation time periods or
