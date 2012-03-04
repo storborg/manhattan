@@ -56,30 +56,13 @@ class TestClientServer(BaseTest):
                                      'Timed out after 10 ms waiting'):
             client.foo()
 
-    def test_clientserver_executable(self):
-        path = work_path('clientserver-executable')
-
+    def _run_server_with_args(self, args, path, url, bind):
         log = TimeRotatingLog(path)
         data.run_clickstream(log)
 
-        url = 'mysql://manhattan:quux@localhost/manhattan_test'
         drop_existing_tables(create_engine(url))
 
-        log_path = work_path('debug.log')
-
-        sys.argv = [
-            'manhattan-server',
-            '--url=%s' % url,
-            '--path=%s' % path,
-            '--log=%s' % log_path,
-            '--bind=tcp://127.0.0.1:5555',
-            '--complex="abandoned cart|add to cart|began checkout"',
-            '--complex="abandoned checkout|began checkout|completed checkout"',
-            '--complex="abandoned after validation failure|'
-            'began checkout,checkout validation failed|completed checkout"',
-            '--complex="abandoned after payment failure|'
-            'began checkout,payment failed|completed checkout"',
-        ]
+        sys.argv = args
 
         killed_event = Event()
         th = Thread(target=server_main, args=(killed_event,))
@@ -91,8 +74,6 @@ class TestClientServer(BaseTest):
             # Give the server time to process all the records before querying
             # it.
             time.sleep(0.5)
-
-            self.assertTrue(os.path.exists(log_path))
 
             def fake_interact(banner, local):
                 client = local['client']
@@ -106,12 +87,33 @@ class TestClientServer(BaseTest):
 
             code.interact = fake_interact
 
-            sys.argv = ['manhattan-client',
-                        '--connect=tcp://127.0.0.1:5555']
+            sys.argv = ['manhattan-client', '--connect=%s' % bind]
             client_main()
         finally:
             code.interact = orig_interact
             killed_event.set()
+
+    def test_clientserver_executable(self):
+        path = work_path('clientserver-executable')
+        log_path = work_path('debug.log')
+        url = 'mysql://manhattan:quux@localhost/manhattan_test'
+        bind = 'tcp://127.0.0.1:5555'
+
+        args = [
+            'manhattan-server',
+            '--url=%s' % url,
+            '--path=%s' % path,
+            '--log=%s' % log_path,
+            '--bind=%s' % bind,
+            '--complex="abandoned cart|add to cart|began checkout"',
+            '--complex="abandoned checkout|began checkout|completed checkout"',
+            '--complex="abandoned after validation failure|'
+            'began checkout,checkout validation failed|completed checkout"',
+            '--complex="abandoned after payment failure|'
+            'began checkout,payment failed|completed checkout"',
+        ]
+        self._run_server_with_args(args, path, url, bind)
+        self.assertTrue(os.path.exists(log_path))
 
     def test_configure_logging(self):
         cfg = logging_config(filename=None)
