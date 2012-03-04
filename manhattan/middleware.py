@@ -32,6 +32,10 @@ class ManhattanMiddleware(object):
         resp.content_type = 'image/gif'
         return resp
 
+    def count_page(self, req):
+        return (req.method in ('GET', 'POST') and
+                req.headers.get('X-Purpose') != 'preview')
+
     def __call__(self, environ, start_response):
         req = Request(environ)
 
@@ -52,7 +56,7 @@ class ManhattanMiddleware(object):
             return resp(environ, start_response)
 
         resp = req.get_response(self.app)
-        if req.method in ('GET', 'POST'):
+        if self.count_page(req):
             visitor.page(req)
 
         if fresh:

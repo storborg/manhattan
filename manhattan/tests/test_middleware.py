@@ -139,3 +139,8 @@ class TestMiddleware(TestCase):
         app.options('/somepage')
         records = list(log.process())
         self.assertEqual(len(records), 0)
+
+    def test_safari_top_sites_not_counted(self):
+        app.get('/blah', headers={'X-Purpose': 'preview'})
+        records = list(log.process())
+        self.assertEqual(len(records), 0)
