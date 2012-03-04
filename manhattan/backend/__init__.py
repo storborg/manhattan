@@ -1,5 +1,6 @@
 from collections import Counter, defaultdict
 from decimal import Decimal
+from operator import itemgetter
 
 from manhattan import visitor
 
@@ -265,3 +266,14 @@ class Backend(object):
         else:
             # visitor.PER
             return value / self.count(u'viewed page', variant, site_id=site_id)
+
+    def all_tests(self):
+        # Start with flushed.
+        all = self.store.all_tests()
+        # Update from unflushed (so that dirty entries overwrite the flushed).
+        all.update(self.tests.entries)
+        # Sort by last timestamp descending.
+        all = [(name, test.first_timestamp, test.last_timestamp)
+               for name, test in all.iteritems()]
+        all.sort(key=itemgetter(2), reverse=True)
+        return all

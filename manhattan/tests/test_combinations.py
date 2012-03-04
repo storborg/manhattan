@@ -98,6 +98,9 @@ class TestCombinations(BaseTest):
             u'abandoned after validation failure', site_id=1)
         self.assertEqual(abandoned_validation, 0)
 
+        self.assertEqual(backend.all_tests(),
+                         [('red checkout form', 1602, 7246)])
+
     def _get_backend(self, reset=False):
         #url = 'mysql://manhattan:quux@localhost/manhattan_test'
         url = 'sqlite:////tmp/manhattan-test.db'

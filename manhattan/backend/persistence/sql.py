@@ -281,3 +281,14 @@ class SQLPersistentStore(object):
                             'bucket_id': bucket_id,
                             'site_id': site_id},
                            default=(0, 0))
+
+    def all_tests(self):
+        t = self.tests_table
+        r = select([t.c.name,
+                    t.c.first_timestamp,
+                    t.c.last_timestamp]).execute()
+        ret = {}
+        for name, first, last in r:
+            ret[name] = Test(first_timestamp=first,
+                             last_timestamp=last)
+        return ret
