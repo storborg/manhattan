@@ -1,3 +1,4 @@
+import argparse
 import zmq
 import code
 
@@ -42,6 +43,12 @@ class Client(object):
 
 
 def main():
-    client = Client()
+    p = argparse.ArgumentParser(description='Run a Manhattan client.')
+    p.add_argument('--connect', type=str,
+                   default='tcp://127.0.0.1:5555',
+                   help='ZeroMQ socket description to connect to')
+    args = p.parse_args()
+
+    client = Client(args.connect)
     code.interact("The 'client' object is available for queries.",
                   local=dict(client=client))

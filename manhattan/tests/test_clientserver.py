@@ -76,6 +76,7 @@ class TestClientServer(TestCase):
             '--url=%s' % url,
             '--path=%s' % path,
             '--log=%s' % log_path,
+            '--bind=tcp://127.0.0.1:5555',
             '--complex="abandoned cart|add to cart|began checkout"',
             '--complex="abandoned checkout|began checkout|completed checkout"',
             '--complex="abandoned after validation failure|'
@@ -109,6 +110,8 @@ class TestClientServer(TestCase):
 
             code.interact = fake_interact
 
+            sys.argv = ['manhattan-client',
+                        '--connect=tcp://127.0.0.1:5555']
             client_main()
         finally:
             code.interact = orig_interact

@@ -116,7 +116,8 @@ def load_args_config(args):
                 error_log_path=args.error_log_path,
                 complex_goals=parse_complex_goals(args.complex),
                 sqlalchemy_url=args.url,
-                input_log_path=args.input_log_path)
+                input_log_path=args.input_log_path,
+                bind=args.bind)
 
 
 def main(killed_event=None):
@@ -134,6 +135,9 @@ def main(killed_event=None):
     p.add_argument('-c', '--complex', dest='complex', action='append',
                    help='Configure complex goal, like '
                    'name|include a, include b|exclude a')
+    p.add_argument('--bind', type=str,
+                   default='tcp://127.0.0.1:5555',
+                   help='ZeroMQ socket description to bind to')
 
     args = p.parse_args()
 
@@ -143,13 +147,14 @@ def main(killed_event=None):
                                              config.pop('error_log_path')))
 
     input_log_path = config.pop('input_log_path')
+    bind = config.pop('bind')
     backend = Backend(**config)
     manhattan.server_backend = backend
 
     mhlog = TimeRotatingLog(input_log_path)
     worker = Worker(mhlog, backend, stats_every=5000)
 
-    server = Server(backend)
+    server = Server(backend, bind=bind)
     server.start()
 
     try:
