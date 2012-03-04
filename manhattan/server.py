@@ -120,6 +120,13 @@ def load_args_config(args):
                 bind=args.bind)
 
 
+def load_python_config(namespace):
+    mod_name, attr_name = namespace.rsplit('.', 1)
+    __import__(mod_name)
+    mod = sys.modules[mod_name]
+    return getattr(mod, attr_name)
+
+
 def main(killed_event=None):
     p = argparse.ArgumentParser(
         description='Run a Manhattan worker with a TimeRotatingLog.')
@@ -139,9 +146,15 @@ def main(killed_event=None):
                    default='tcp://127.0.0.1:5555',
                    help='ZeroMQ socket description to bind to')
 
+    p.add_argument('--config', type=str,
+                   help='Python namespace to use for configuration')
+
     args = p.parse_args()
 
-    config = load_args_config(args)
+    if args.config:
+        config = load_python_config(args.config)
+    else:
+        config = load_args_config(args)
 
     logging.config.dictConfig(logging_config(config.pop('verbose'),
                                              config.pop('error_log_path')))

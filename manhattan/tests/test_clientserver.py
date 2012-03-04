@@ -92,6 +92,8 @@ class TestClientServer(BaseTest):
         finally:
             code.interact = orig_interact
             killed_event.set()
+            # Wait for thread to die before returning.
+            time.sleep(0.5)
 
     def test_clientserver_executable(self):
         path = work_path('clientserver-executable')
@@ -118,3 +120,14 @@ class TestClientServer(BaseTest):
     def test_configure_logging(self):
         cfg = logging_config(filename=None)
         self.assertNotIn('root_file', cfg)
+
+    def test_clientserver_python_config(self):
+        path = data.sampleconfig['input_log_path']
+        url = data.sampleconfig['sqlalchemy_url']
+        bind = data.sampleconfig['bind']
+        log_path = data.sampleconfig['error_log_path']
+
+        args = ['manhattan-server',
+                '--config=manhattan.tests.data.sampleconfig']
+        self._run_server_with_args(args, path, url, bind)
+        self.assertTrue(os.path.exists(log_path))

@@ -6,6 +6,8 @@ from webob import Request
 from manhattan import visitor
 from manhattan.visitor import Visitor
 
+from .base import work_path
+
 
 test_complex_goals = [
     (u'abandoned cart', set([u'add to cart']), set([u'began checkout'])),
@@ -18,6 +20,16 @@ test_complex_goals = [
      set([u'began checkout', u'payment failed']),
      set([u'completed checkout'])),
 ]
+
+
+sampleconfig = {
+    'input_log_path': work_path('clientserver-python-config'),
+    'sqlalchemy_url': 'sqlite:///' + work_path('sampleconfig.db'),
+    'complex_goals': test_complex_goals,
+    'bind': 'tcp://127.0.0.1:5556',
+    'verbose': False,
+    'error_log_path': work_path('python-config-debug.log'),
+}
 
 
 test_clickstream = [
