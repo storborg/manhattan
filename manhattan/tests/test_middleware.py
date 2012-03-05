@@ -45,7 +45,7 @@ host_map = {'localhost': 3,
             'example.com': 5}
 
 inner_app = SampleApp()
-wrapped_app = ManhattanMiddleware(inner_app, log, host_map=host_map)
+wrapped_app = ManhattanMiddleware(inner_app, log, 'secret', host_map=host_map)
 app = TestApp(wrapped_app)
 
 
