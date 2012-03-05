@@ -7,7 +7,7 @@ from .util import nonce, transparent_pixel, pixel_tag
 
 class ManhattanMiddleware(object):
 
-    def __init__(self, app, log, secret, cookie_name='vis',
+    def __init__(self, app, log, secret, cookie_name='mh',
                  pixel_path='/vpixel.gif', host_map=None):
         self.app = app
         self.cookie_name = cookie_name
