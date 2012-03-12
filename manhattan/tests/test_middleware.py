@@ -68,8 +68,8 @@ class TestMiddleware(TestCase):
         self.assertEqual(record.key, 'page')
         self.assertEqual(record.site_id, '3')
 
-        m = re.search('<img src="(.+)" alt="" />', resp.body)
-        pixel_path = m.group(1)
+        m = re.search('<img (.+)src="(.+)" alt="" />', resp.body)
+        pixel_path = m.group(2)
         resp = app.get(pixel_path)
         self.assertEqual(resp.content_type, 'image/gif')
 
