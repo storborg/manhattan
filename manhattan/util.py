@@ -33,7 +33,8 @@ def pixel_tag(path):
     :rtype:
         string
     """
-    return '<img src="%s" alt="" />' % path
+    return ('<img style="height:0;width:0;position:absolute;" '
+            'src="%s" alt="" />' % path)
 
 
 def nonce():
