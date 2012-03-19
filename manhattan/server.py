@@ -97,7 +97,7 @@ def logging_config(verbose=False, filename=None):
 
 
 def parse_names(names):
-    return set(name.decode('ascii').strip() for name in names.split(','))
+    return set(unicode(name).strip() for name in names.split(','))
 
 
 def parse_complex_goals(complex):
@@ -107,7 +107,7 @@ def parse_complex_goals(complex):
         complex_name, include_names, exclude_names = line.strip('"').split('|')
         include = parse_names(include_names)
         exclude = parse_names(exclude_names)
-        configured.append((complex_name.decode('ascii'), include, exclude))
+        configured.append((unicode(complex_name), include, exclude))
     return configured
 
 
