@@ -160,7 +160,7 @@ def run_clickstream(log, first=None, last=None):
     def set_fake_timestamp(v, ts):
         def fake_timestamp(self):
             return '%d.%04d' % (ts, randint(0, 9999))
-        v.timestamp = types.MethodType(fake_timestamp, v, Visitor)
+        v.timestamp = types.MethodType(fake_timestamp, v)
 
     stream = test_clickstream
     if first and last:

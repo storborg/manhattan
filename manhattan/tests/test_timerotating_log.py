@@ -12,7 +12,7 @@ from .base import BaseTest, work_path
 def set_fake_name(log, index):
     def fake_name(self, timestamp):
         return '%s.%s' % (self.path, index)
-    log.log_name_for = types.MethodType(fake_name, log, TimeRotatingLog)
+    log.log_name_for = types.MethodType(fake_name, log)
 
 
 def make_thread_consumer(log_r, process_from=None):
