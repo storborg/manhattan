@@ -187,7 +187,7 @@ def run_clickstream(log, first=None, last=None):
         elif cmd == 'pixel':
             v.pixel()
         elif cmd == 'goal':
-            goal_name = args[0].decode('ascii')
+            goal_name = str(args[0])
             value = args[1]
             value_type = value_types.get(goal_name)
             value_format = value_formats.get(goal_name)
@@ -195,4 +195,4 @@ def run_clickstream(log, first=None, last=None):
                    value_type=value_type,
                    value_format=value_format)
         elif cmd == 'split':
-            v.split(args[0].decode('ascii'))
+            v.split(str(args[0]))
