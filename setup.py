@@ -17,7 +17,6 @@ setup(name="manhattan",
           'webob',
           'pytz',
           'pyzmq',
-          'simplejson',
           # These are for tests.
           'coverage',
           'nose>=1.1',
