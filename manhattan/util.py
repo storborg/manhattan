@@ -6,6 +6,7 @@ be used externally.
 import os
 import random
 import bisect
+import binascii
 
 
 """
@@ -46,7 +47,7 @@ def nonce():
     :rtype:
         string
     """
-    return os.urandom(20).encode('hex')
+    return binascii.hexlify(os.urandom(20))
 
 
 def nonrandom_choice(seed, seq):
