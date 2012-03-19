@@ -5,7 +5,7 @@ class TextLog(object):
     by itself, and is intended to be subclassed.
     """
     def format(self, elements):
-        return '\t'.join(el.encode('unicode_escape') for el in elements)
+        return b'\t'.join(el.encode('unicode_escape') for el in elements)
 
     def parse(self, record):
-        return [el.decode('unicode_escape') for el in record.split('\t')]
+        return [el.decode('unicode_escape') for el in record.split(b'\t')]

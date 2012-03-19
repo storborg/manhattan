@@ -39,11 +39,11 @@ class TimeRotatingLog(TextLog):
             self.f = open(self.current_log_name, 'ab')
 
         record = self.format(elements)
-        assert '\n' not in record
+        assert b'\n' not in record
 
         flock(self.f, LOCK_EX)
         self.f.write(record)
-        self.f.write('\n')
+        self.f.write(b'\n')
         self.f.flush()
         flock(self.f, LOCK_UN)
 
