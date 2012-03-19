@@ -29,7 +29,7 @@ class TestUtil(TestCase):
         n2 = util.nonce()
         self.assertNotEqual(n1, n2)
 
-        s = ''.join(util.nonce() for i in range(100))
+        s = b''.join(util.nonce() for i in range(100))
         self.assertRandomish(s)
 
     def test_choose_population_bool(self):
