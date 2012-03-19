@@ -107,7 +107,7 @@ class Visitor(object):
         rec = GoalRecord(timestamp=self.timestamp(),
                          vid=self.id,
                          site_id=self.site_id,
-                         name=name.encode('ascii', 'replace'),
+                         name=name.encode('ascii', 'replace').decode('ascii'),
                          value=value or '',
                          value_type=value_type or '',
                          value_format=value_format or '')
