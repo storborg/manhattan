@@ -159,3 +159,19 @@ def decode_http_header(raw):
         return raw.decode('iso-8859-1', 'replace')
     else:
         return u''
+
+
+def decode_url(raw):
+    """
+    Decode a URL into a unicode string. Expected to be UTF-8.
+
+    :param raw:
+        Raw URL string.
+    :type raw:
+        string (non-unicode)
+    :returns:
+        Decode URL.
+    :rtype:
+        unicode string
+    """
+    return raw.decode('utf-8')

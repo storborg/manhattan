@@ -1,6 +1,6 @@
 import time
 
-from .util import choose_population, decode_http_header
+from .util import choose_population, decode_http_header, decode_url
 from .record import PageRecord, PixelRecord, GoalRecord, SplitRecord
 
 
@@ -68,7 +68,7 @@ class Visitor(object):
                          site_id=self.site_id,
                          ip=request.remote_addr or '0.0.0.0',
                          method=request.method,
-                         url=request.url.decode('utf-8'),
+                         url=decode_url(request.url),
                          user_agent=decode_http_header(request.user_agent),
                          referer=decode_http_header(request.referer))
         self.write(rec)
