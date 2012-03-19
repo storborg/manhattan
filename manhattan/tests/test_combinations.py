@@ -21,7 +21,6 @@ warnings.filterwarnings('error',
 from manhattan.worker import Worker
 
 from manhattan.log.memory import MemoryLog
-from manhattan.log.zeromq import ZeroMQLog
 from manhattan.log.timerotating import TimeRotatingLog
 
 from manhattan.backend import Backend
@@ -157,19 +156,6 @@ class TestCombinations(BaseTest):
         backend = self._get_backend(reset=True)
 
         worker1 = Worker(log, backend)
-        worker1.run(resume=False)
-
-        self._check_backend_queries(backend)
-
-    def test_zeromq_log(self):
-        ctx = zmq.Context()
-        log_r = ZeroMQLog(ctx, 'r', stay_alive=False, endpoints='tcp://*:8128')
-        log_w = ZeroMQLog(ctx, 'w')
-        data.run_clickstream(log_w)
-
-        backend = self._get_backend(reset=True)
-
-        worker1 = Worker(log_r, backend)
         worker1.run(resume=False)
 
         self._check_backend_queries(backend)
