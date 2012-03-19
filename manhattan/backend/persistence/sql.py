@@ -21,7 +21,7 @@ class LargePickleType(types.PickleType):
 
     def load_dialect_impl(self, dialect):
         if dialect.name == 'mysql':
-            return dialect.type_descriptor(mysql.LONGBLOB)
+            return dialect.type_descriptor(mysql.LONGBLOB)  # pragma: nocover
         else:
             return dialect.type_descriptor(types.LargeBinary)
 

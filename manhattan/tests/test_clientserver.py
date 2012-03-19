@@ -98,7 +98,7 @@ class TestClientServer(BaseTest):
     def test_clientserver_executable(self):
         path = work_path('clientserver-executable')
         log_path = work_path('debug.log')
-        url = 'mysql://manhattan:quux@localhost/manhattan_test'
+        url = 'sqlite:////tmp/manhattan-clientserver.db'
         bind = 'tcp://127.0.0.1:5555'
 
         args = [
