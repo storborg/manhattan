@@ -63,7 +63,7 @@ class TimeRotatingLog(TextLog):
 
             fresh_files = False
             for fn in fnames:
-                if fn > last_consumed:
+                if (not last_consumed) or (fn > last_consumed):
                     fresh_files = True
                     last_consumed = fn
                     yield fn
