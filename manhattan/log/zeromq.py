@@ -18,7 +18,7 @@ class ZeroMQLog(TextLog):
         else:
             self.sock = ctx.socket(zmq.SUB)
             self.sock.bind(endpoints or 'tcp://*:8128')
-            self.sock.setsockopt(zmq.SUBSCRIBE, '')
+            self.sock.setsockopt(zmq.SUBSCRIBE, b'')
 
     def write(self, elements):
         self.sock.send(self.format(elements), flags=0)
