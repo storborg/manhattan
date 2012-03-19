@@ -71,6 +71,8 @@ class Backend(object):
 
         else:
             history.nonbot_queue.append(rec)
+            # Limit nonbot queue to most recent 500 events.
+            del history.nonbot_queue[:-500]
 
         self.visitors.put(rec.vid, history)
         self.pointer = ptr
