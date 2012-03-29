@@ -127,6 +127,7 @@ class Backend(object):
             test.first_timestamp = timestamp
 
         test.last_timestamp = timestamp
+        test.variants.add(variant)
 
         self.tests.put(name, test)
 
@@ -248,6 +249,13 @@ class Backend(object):
 
     def goal_value(self, goal, variant=None, rollup_key='all', bucket_id=0,
                    site_id=None):
+
+        goal_obj = self.goals.get(goal)
+
+        if not goal_obj.value_type:
+            return self.count(goal, variant, rollup_key=rollup_key,
+                              bucket_id=bucket_id, site_id=site_id)
+
         if variant:
             test_name, selected = variant
             key = goal, test_name, selected, rollup_key, bucket_id, site_id
@@ -259,16 +267,18 @@ class Backend(object):
             flushed = self.store.count_conversions(*key)[1]
         value = local + Decimal(str(flushed))
 
-        goal_obj = self.goals.get(goal)
         if goal_obj.value_type == visitor.SUM:
             return value
 
         elif goal_obj.value_type == visitor.AVERAGE:
-            return value / self.count(goal, variant, site_id=site_id)
+            return value / self.count(goal, variant, rollup_key=rollup_key,
+                                      bucket_id=bucket_id, site_id=site_id)
 
         else:
             # visitor.PER
-            return value / self.count(u'viewed page', variant, site_id=site_id)
+            return value / self.count(u'viewed page', variant,
+                                      rollup_key=rollup_key,
+                                      bucket_id=bucket_id, site_id=site_id)
 
     def all_tests(self):
         # Start with flushed.
@@ -280,3 +290,17 @@ class Backend(object):
                for name, test in all.iteritems()]
         all.sort(key=itemgetter(2), reverse=True)
         return all
+
+    def results(self, test_name, goals, site_id=None):
+        # Return a dict: keys are populations, values are a list of values for
+        # the goals specified.
+        test = self.tests.get(test_name)
+
+        ret = {}
+        for variant in test.variants:
+            values = []
+            for goal in goals:
+                values.append(self.goal_value(goal, variant, site_id=site_id))
+            ret[variant[1]] = values
+
+        return ret

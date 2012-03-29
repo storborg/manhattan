@@ -53,6 +53,7 @@ class SQLPersistentStore(object):
             Column('name', types.String(255), nullable=False, index=True),
             Column('first_timestamp', types.Integer, nullable=False),
             Column('last_timestamp', types.Integer, nullable=False),
+            Column('variants', LargePickleType, nullable=False),
             mysql_engine='InnoDB')
 
         self.goal_table = Table(
@@ -154,7 +155,8 @@ class SQLPersistentStore(object):
             self.put_kv(self.tests_table,
                         {'name': name},
                         {'first_timestamp': test.first_timestamp,
-                         'last_timestamp': test.last_timestamp})
+                         'last_timestamp': test.last_timestamp,
+                         'variants': test.variants})
 
     def put_goal(self, goals):
         for name, goal in goals.iteritems():
@@ -236,11 +238,12 @@ class SQLPersistentStore(object):
 
     def get_test(self, name):
         r = self.get_kv(self.tests_table,
-                        ['first_timestamp', 'last_timestamp'],
+                        ['first_timestamp', 'last_timestamp', 'variants'],
                         {'name': name})
-        first, last = r
+        first, last, variants = r
         return Test(first_timestamp=first,
-                    last_timestamp=last)
+                    last_timestamp=last,
+                    variants=variants)
 
     def get_goal(self, name):
         r = self.get_kv(self.goal_table,
@@ -286,9 +289,11 @@ class SQLPersistentStore(object):
         t = self.tests_table
         r = select([t.c.name,
                     t.c.first_timestamp,
-                    t.c.last_timestamp]).execute()
+                    t.c.last_timestamp,
+                    t.c.variants]).execute()
         ret = {}
-        for name, first, last in r:
+        for name, first, last, variants in r:
             ret[name] = Test(first_timestamp=first,
-                             last_timestamp=last)
+                             last_timestamp=last,
+                             variants=variants)
         return ret

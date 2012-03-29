@@ -36,9 +36,10 @@ class Test(object):
     class area intended to be stored with a reference to the test name, like in
     a key/value store keyed by test name.
     """
-    def __init__(self, first_timestamp=None, last_timestamp=None):
+    def __init__(self, first_timestamp=None, last_timestamp=None, variants=None):
         self.first_timestamp = first_timestamp
         self.last_timestamp = last_timestamp
+        self.variants = variants or set()
 
 
 class Goal(object):
