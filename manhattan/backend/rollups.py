@@ -4,12 +4,12 @@ interface expected by the Manhattan backend for rollup aggregations.
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 
 
-class LocalDayRollup(object):
+class LocalRollup(object):
 
     def __init__(self, tzname):
         self.tz = pytz.timezone(tzname)
@@ -19,8 +19,20 @@ class LocalDayRollup(object):
         dt_local = dt.astimezone(self.tz).replace(tzinfo=None)
         return dt_local.date()
 
+
+class LocalDayRollup(LocalRollup):
+
     def get_bucket(self, timestamp, history):
         return time.mktime(self.start_date_for(timestamp).timetuple())
+
+
+class LocalWeekRollup(LocalRollup):
+
+    def get_bucket(self, timestamp, history):
+        day = self.start_date_for(timestamp)
+        days_from_sunday = day.isoweekday() % 7
+        day -= timedelta(days=days_from_sunday)
+        return time.mktime(day.timetuple())
 
 
 class AllRollup(object):

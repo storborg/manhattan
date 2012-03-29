@@ -4,7 +4,7 @@ from operator import itemgetter
 
 from manhattan import visitor
 
-from .rollups import AllRollup, LocalDayRollup, BrowserRollup
+from .rollups import AllRollup, LocalDayRollup, LocalWeekRollup, BrowserRollup
 from .cache import DeferredLRUCache
 from .model import VisitorHistory, Test, Goal
 
@@ -14,6 +14,7 @@ from .persistence.sql import SQLPersistentStore
 default_rollups = {
     'all': AllRollup(),
     'pst_day': LocalDayRollup('America/Los_Angeles'),
+    'pst_week': LocalWeekRollup('America/Los_Angeles'),
     'browser': BrowserRollup(),
 }
 
