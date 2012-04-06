@@ -271,14 +271,16 @@ class Backend(object):
             return value
 
         elif goal_obj.value_type == visitor.AVERAGE:
-            return value / self.count(goal, variant, rollup_key=rollup_key,
-                                      bucket_id=bucket_id, site_id=site_id)
+            count = self.count(goal, variant, rollup_key=rollup_key,
+                               bucket_id=bucket_id, site_id=site_id)
+            return value / count if count > 0 else 0
 
         else:
             # visitor.PER
-            return value / self.count(u'viewed page', variant,
-                                      rollup_key=rollup_key,
-                                      bucket_id=bucket_id, site_id=site_id)
+            count = self.count(u'viewed page', variant,
+                               rollup_key=rollup_key,
+                               bucket_id=bucket_id, site_id=site_id)
+            return value / count if count > 0 else 0
 
     def all_tests(self):
         # Start with flushed.
