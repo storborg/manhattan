@@ -165,7 +165,7 @@ class TimeRotatingLogTest(BaseTest):
             # Create a new thread consumer
             log_r2 = TimeRotatingLog(path)
             consumed, consumer, _ = \
-                    make_thread_consumer(log_r2, process_from=last_pointer)
+                make_thread_consumer(log_r2, process_from=last_pointer)
             time.sleep(log_r2.sleep_delay * 10)
             # Check that the second record was read.
             self.assertEqual(len(consumed), 1)

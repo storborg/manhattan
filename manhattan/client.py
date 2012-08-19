@@ -38,7 +38,7 @@ class Client(object):
                     raise ServerError(resp)
             else:
                 raise TimeoutError('Timed out after %d ms waiting for reply' %
-                                  self.wait)
+                                   self.wait)
         return rpc_method
 
 

@@ -204,7 +204,7 @@ class SQLPersistentStore(object):
             delta = inc_variant_conversions.get(key, 0)
             value = inc_variant_values.get(key, 0)
             goal_name, test_name, selected, \
-                    rollup_key, bucket_id, site_id = key
+                rollup_key, bucket_id, site_id = key
 
             self.put_kv(self.variant_conversion_counts_table,
                         {'goal_name': goal_name,
