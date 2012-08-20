@@ -60,10 +60,10 @@ events to a log instance for later reconciliation. This ensures that the
 additional in-band request latency incurred by adding Manhattan to an
 application is very small: typically less than 1ms.
 
-The recommend log type for basic deployments is the ``TimeRotatingLog``, which
-writes events as plaintext lines in a series of append-only files, with one
-file per hour. There are other choices of logs for advanced deployments, for
-more information see the ``manhattan.log`` module.
+The recommended log type for basic deployments is the ``TimeRotatingLog``,
+which writes events as plaintext lines in a series of append-only files, with
+one file per hour. There are other choices of logs for advanced deployments,
+for more information see the ``manhattan.log`` module.
 
     from manhattan.middleware import ManhattanMiddleware
     from manhattan.log.timerotating import TimeRotatingLog
