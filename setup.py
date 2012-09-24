@@ -3,12 +3,16 @@ from setuptools import setup
 
 setup(name="manhattan",
       version='0.1',
-      description='',
+      description='Robust Server-Side Analytics',
       long_description='',
       classifiers=[
+          'Development Status :: 5 - Production/Stable',
           'Programming Language :: Python :: 2.7',
+          'Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware',
+          'Topic :: Internet :: WWW/HTTP :: Site Management',
       ],
       keywords='',
+      url='http://github.com/storborg/manhattan',
       author='Scott Torborg',
       author_email='scott@cartlogic.com',
       install_requires=[
@@ -23,7 +27,7 @@ setup(name="manhattan",
           'nose-cover3',
           'webtest',
       ],
-      license='PRIVATE',
+      license='MIT',
       packages=['manhattan'],
       entry_points=dict(console_scripts=[
           'manhattan-server=manhattan.server:main',
