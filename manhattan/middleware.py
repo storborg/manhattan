@@ -60,7 +60,8 @@ class ManhattanMiddleware(object):
             visitor.page(req)
 
         if fresh:
-            resp.set_cookie(self.cookie_name, self.signer.sign(visitor.id))
+            resp.set_cookie(self.cookie_name, self.signer.sign(visitor.id),
+                            httponly=True)
 
         if self.pixel_path and resp.content_type == 'text/html':
             self.inject_pixel(resp)
