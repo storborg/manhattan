@@ -17,3 +17,6 @@
 # Tests coverage temp files.
 .coverage
 /cover
+
+# Rendered sphinx docs.
+docs/_build
