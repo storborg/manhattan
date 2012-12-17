@@ -16,7 +16,7 @@ analytics and multivariate testing. It is:
 It is also:
 
 * 2 oz rye whiskey
-* &frac12; oz sweet vermouth
+* 1/2 oz sweet vermouth
 * 2 dashes bitters
 * 1 cherry
 
