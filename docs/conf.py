@@ -86,7 +86,7 @@ html_theme = 'cartlogic-sphinx'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ['/var/sphixn-themes']
+html_theme_path = ['/var/sphinx-themes']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
