@@ -73,7 +73,7 @@ for more information see the ``manhattan.log`` module.::
 
 
     log = TimeRotatingLog('/tmp/manhattan.log')
-    app = ManhattanMiddleware(app, log)
+    app = ManhattanMiddleware(app, log, secret='s3krit')
 
 Try opening up [http://localhost:8000](http://localhost:8000) in your browser
 and visiting a few urls, e.g.
@@ -204,7 +204,7 @@ for example::
         'bar.com': 2,
         'baz.example.edu': 3
     }
-    app = ManhattanMiddleware(app, log, host_map=host_map)
+    app = ManhattanMiddleware(app, log, secret='s3krit', host_map=host_map)
 
 
 Configurable Rollups
