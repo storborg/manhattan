@@ -20,6 +20,7 @@ class TimeRotatingLog(TextLog):
         self.path = path
         self.current_log_name = None
         self.killed = Event()
+        self.f = None
 
     def create_dirs(self):
         dirpath = os.path.dirname(self.path)
@@ -36,6 +37,8 @@ class TimeRotatingLog(TextLog):
         if check_log_name != self.current_log_name:
             self.current_log_name = check_log_name
             self.create_dirs()
+            if self.f:
+                self.f.close()
             self.f = open(self.current_log_name, 'ab')
 
         record = self.format(elements)
