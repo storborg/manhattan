@@ -24,7 +24,7 @@ class TimeRotatingLog(TextLog):
 
     def create_dirs(self):
         dirpath = os.path.dirname(self.path)
-        if not os.path.exists(dirpath):
+        if dirpath and not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
     def log_name_for(self, ts):
