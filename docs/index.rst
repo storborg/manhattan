@@ -75,9 +75,8 @@ for more information see the ``manhattan.log`` module.::
     log = TimeRotatingLog('/tmp/manhattan.log')
     app = ManhattanMiddleware(app, log, secret='s3krit')
 
-Try opening up [http://localhost:8000](http://localhost:8000) in your browser
-and visiting a few urls, e.g.
-[http://localhost:8000/some-path](http://localhost:8000/some-path). Then, look
+Try opening up http://localhost:8000 in your browser
+and visiting a few urls, e.g.  http://localhost:8000/some-path. Then, look
 at the generated files, e.g.::
 
     $ cat /tmp/manhattan.log.*
@@ -119,7 +118,7 @@ For example, to record a goal conversion, we can modify our basic app like so::
         return Response('Hello')
 
 After making this change, you should be able to visit
-[http://localhost:8000/pie](http://localhost:8000/pie), and see an event
+http://localhost:8000/pie, and see an event
 recorded in the log for the corresponding goal conversion.
 
 Recording a goal is not idempotent: if you call ``visitor.goal()`` twice, two
@@ -137,8 +136,8 @@ Performing a split test is similar::
             s = 'pie'
         return Response(s)
 
-Visiting [http://localhost:8000](http://localhost:8000) should show either
-'cake' or 'pie', and record the returned population in the event log.
+Visiting http://localhost:8000 should show either 'cake' or 'pie', and record
+the returned population in the event log.
 
 Recording a split test is idempotent: for the same visitor and the same test,
 the same population will always be returned, so you can make as many successive
