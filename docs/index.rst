@@ -280,9 +280,9 @@ the top level of the repo::
 
     $ nosetests
 
-There are no [PEP8](http://www.python.org/dev/peps/pep-0008/) or
-[Pyflakes](http://pypi.python.org/pypi/pyflakes) warnings in the codebase. To
-verify that::
+There are no `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ or `Pyflakes
+<http://pypi.python.org/pypi/pyflakes>`_ warnings in the codebase. To verify
+that::
 
     $ pip install pep8 pyflakes
     $ pep8 -r .
