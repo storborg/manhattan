@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import SAWarning
-import zmq
 
 import warnings
 # Filter out pysqlite Decimal loss of precision warning.
