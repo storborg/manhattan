@@ -32,6 +32,34 @@ Install with pip::
 Quick Start
 ------------
 
+Architecture
+~~~~~~~~~~~~
+
+Manhattan is broken up into several conceptual modules. Those modules pass data
+as follows:
+
+.. graphviz::
+
+    digraph architecture {
+        rankdir=LR;
+
+        node [shape=box];
+
+        Middleware -> Log -> Server;
+
+        subgraph cluster_backend {
+            label = "Backend";
+            Server -> "LRU Cache" -> SQL;
+            SQL -> "LRU Cache" -> Server;
+        }
+
+        Server -> Client;
+        Client -> Server;
+    }
+
+The **Log** component of a system can be interchanged, and a few different
+options are available for different deployment scenarios.
+
 Frontend Setup
 ~~~~~~~~~~~~~~
 
