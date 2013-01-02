@@ -68,6 +68,7 @@ class TestMiddleware(TestCase):
         record = self.process()
         self.assertEqual(record.key, 'page')
         self.assertEqual(record.site_id, '3')
+        first_vid = record.vid
 
         m = re.search('<img (.+)src="(.+)" alt="" />', resp.body)
         pixel_path = m.group(2)
@@ -77,6 +78,7 @@ class TestMiddleware(TestCase):
         record = self.process()
         self.assertEqual(record.key, 'pixel')
         self.assertEqual(record.site_id, '3')
+        self.assertEqual(first_vid, record.vid)
 
         resp = app.get('/foo')
 
@@ -84,6 +86,7 @@ class TestMiddleware(TestCase):
         self.assertEqual(record.key, 'page')
         self.assertTrue(record.url.endswith('/foo'))
         self.assertEqual(record.site_id, '3')
+        self.assertEqual(first_vid, record.vid)
 
     def test_host_map(self):
         resp = app.get('/hello', extra_environ={'HTTP_HOST': 'example.com'})
