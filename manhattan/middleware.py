@@ -1,5 +1,5 @@
 from webob import Request, Response
-from itsdangerous import Signer
+from itsdangerous import Signer, BadSignature
 
 from .visitor import Visitor
 from .util import nonce, transparent_pixel, pixel_tag
@@ -36,11 +36,22 @@ class ManhattanMiddleware(object):
         return (req.method in ('GET', 'POST') and
                 req.headers.get('X-Purpose') != 'preview')
 
+    def get_visitor_id(self, req):
+        signed_value = req.cookies[self.cookie_name]
+        try:
+            return self.signer.unsign(signed_value)
+        except BadSignature:
+            value, sig = signed_value.rsplit('.', 1)
+            expected = self.signer.get_signature(value)
+            s = ('Signature for cookie %r does not match: expected %r, '
+                 'got %s' % (signed_value, expected, sig))
+            raise BadSignature(s)
+
     def __call__(self, environ, start_response):
         req = Request(environ)
 
         if self.cookie_name in req.cookies:
-            vid = self.signer.unsign(req.cookies[self.cookie_name])
+            vid = self.get_visitor_id(req)
             fresh = False
         else:
             vid = nonce()

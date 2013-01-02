@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from webob import Request, Response
 from webtest import TestApp
+from itsdangerous import BadSignature
 
 from manhattan.middleware import ManhattanMiddleware
 from manhattan.record import Record
@@ -143,3 +144,16 @@ class TestMiddleware(TestCase):
         app.get('/blah', headers={'X-Purpose': 'preview'})
         records = list(log.process())
         self.assertEqual(len(records), 0)
+
+    def test_signature_mangled(self):
+        app.get('/')
+        orig_cookie = app.cookies['manhattan']
+        # truncate the last 4 chars, which will blow the sig
+        bad_cookie = orig_cookie[:-4]
+        app.cookies['manhattan'] = bad_cookie
+        try:
+            app.get('/')
+        except BadSignature as e:
+            self.assertIn(bad_cookie, repr(e))
+        else:
+            assert False, "should have failed with bad sig"
