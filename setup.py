@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 setup(name="manhattan",
-      version='0.1',
+      version='0.2',
       description='Robust Server-Side Analytics',
       long_description='',
       classifiers=[
@@ -12,7 +12,7 @@ setup(name="manhattan",
           'Topic :: Internet :: WWW/HTTP :: Site Management',
       ],
       keywords='',
-      url='http://github.com/storborg/manhattan',
+      url='http://github.com/cartlogic/manhattan',
       author='Scott Torborg',
       author_email='scott@cartlogic.com',
       install_requires=[
