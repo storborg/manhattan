@@ -17,7 +17,6 @@ setup(name="manhattan",
       author_email='scott@cartlogic.com',
       install_requires=[
           'sqlalchemy>=0.7',
-          'itsdangerous',
           'webob',
           'pytz',
           'pyzmq',

@@ -77,3 +77,50 @@ class TestUtil(TestCase):
     def test_decode_http_header(self):
         self.assertEqual(util.decode_http_header('hello \xf6 \xe1 world'),
                          u'hello \xf6 \xe1 world')
+
+
+class TestSigner(TestCase):
+    def setUp(self):
+        self.sample = util.nonce()
+
+    def test_round_trip(self):
+        signer = util.Signer('s3krit')
+        signed = signer.sign(self.sample)
+
+        b = signer.unsign(signed)
+        self.assertEqual(self.sample, b)
+
+    def test_bad_signature(self):
+        signer = util.Signer('s3krit')
+        signed = signer.sign(self.sample)
+
+        mangled = signed[:-3]
+        with self.assertRaises(util.BadSignature) as cm:
+            signer.unsign(mangled)
+
+        self.assertIn(mangled, str(cm.exception))
+
+    def test_lowercase(self):
+        signer = util.Signer('s3krit')
+        signed = signer.sign(self.sample)
+
+        b = signer.unsign(signed.lower())
+        self.assertEqual(self.sample, b)
+
+    def test_uppercase(self):
+        signer = util.Signer('s3krit')
+        signed = signer.sign(self.sample)
+
+        b = signer.unsign(signed.upper())
+        self.assertEqual(self.sample, b)
+
+    def test_bad_data(self):
+        signer = util.Signer('s3krit')
+        signed = signer.sign(self.sample)
+
+        mangled = signed.split('.')[0]
+        with self.assertRaises(util.BadData) as cm:
+            signer.unsign(mangled)
+
+        self.assertIn('No separator', str(cm.exception))
+        self.assertIn(mangled, str(cm.exception))

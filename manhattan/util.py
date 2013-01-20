@@ -6,7 +6,8 @@ be used externally.
 import os
 import random
 import bisect
-import binascii
+import hmac
+import hashlib
 
 
 """
@@ -36,18 +37,6 @@ def pixel_tag(path):
     """
     return ('<img style="height:0;width:0;position:absolute;" '
             'src="%s" alt="" />' % path)
-
-
-def nonce():
-    """
-    Build a cryptographically random nonce.
-
-    :returns:
-        Hex string, with 20 bytes (40 hex chars).
-    :rtype:
-        string
-    """
-    return binascii.hexlify(os.urandom(20))
 
 
 def nonrandom_choice(seed, seq):
@@ -175,3 +164,82 @@ def decode_url(raw):
         unicode string
     """
     return raw.decode('utf-8')
+
+
+def constant_time_compare(a, b):
+    "Compare two strings with constant time. Used to prevent timing attacks."
+    if len(a) != len(b):
+        return False
+    result = 0
+    for x, y in zip(a, b):
+        result |= ord(x) ^ ord(y)
+    return result == 0
+
+
+def base36_encode(s):
+    n = 0
+    for char in s:
+        n = (n * 256) + ord(char)
+
+    alphabet = '01234567890abcdefghijklmnopqrstuvwxyz'
+
+    base36 = ''
+    while n:
+        n, i = divmod(n, 36)
+        base36 = alphabet[i] + base36
+
+    return base36 or alphabet[0]
+
+
+def nonce():
+    """
+    Build a cryptographically random nonce.
+
+    :returns:
+        Hex string, with 20 bytes (40 hex chars).
+    :rtype:
+        string
+    """
+    return base36_encode(os.urandom(20))
+
+
+class SignerError(Exception):
+    pass
+
+
+class BadData(SignerError):
+    pass
+
+
+class BadSignature(SignerError):
+    pass
+
+
+class Signer(object):
+    def __init__(self, secret):
+        self.key = hashlib.sha1('manhattan.signer.' + secret).digest()
+        self.sep = '.'
+
+    def get_signature(self, value):
+        "Compute the signature for the given value."
+        mac = hmac.new(self.key, msg=value, digestmod=hashlib.sha1)
+        return base36_encode(mac.digest())
+
+    def sign(self, value):
+        return "%s%s%s" % (value, self.sep, self.get_signature(value))
+
+    def unsign(self, signed_value):
+        if self.sep not in signed_value:
+            raise BadData('No separator %r found in cookie: %s' %
+                          (self.sep, signed_value))
+
+        signed_value = signed_value.lower()
+        value, sig = signed_value.rsplit(self.sep, 1)
+        expected = self.get_signature(value)
+
+        if constant_time_compare(sig, expected):
+            return value
+
+        s = ('Signature for cookie %r does not match: expected %r, '
+             'got %s' % (signed_value, expected, sig))
+        raise BadSignature(s)
