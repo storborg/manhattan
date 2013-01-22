@@ -8,6 +8,7 @@ import random
 import bisect
 import hmac
 import hashlib
+import binascii
 
 
 """
@@ -176,21 +177,6 @@ def constant_time_compare(a, b):
     return result == 0
 
 
-def base36_encode(s):
-    n = 0
-    for char in s:
-        n = (n * 256) + ord(char)
-
-    alphabet = '01234567890abcdefghijklmnopqrstuvwxyz'
-
-    base36 = ''
-    while n:
-        n, i = divmod(n, 36)
-        base36 = alphabet[i] + base36
-
-    return base36 or alphabet[0]
-
-
 def nonce():
     """
     Build a cryptographically random nonce.
@@ -200,7 +186,7 @@ def nonce():
     :rtype:
         string
     """
-    return base36_encode(os.urandom(20))
+    return binascii.hexlify(os.urandom(20))
 
 
 class SignerError(Exception):
@@ -223,7 +209,7 @@ class Signer(object):
     def get_signature(self, value):
         "Compute the signature for the given value."
         mac = hmac.new(self.key, msg=value, digestmod=hashlib.sha1)
-        return base36_encode(mac.digest())
+        return binascii.hexlify(mac.digest())
 
     def sign(self, value):
         return "%s%s%s" % (value, self.sep, self.get_signature(value))
