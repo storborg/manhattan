@@ -43,10 +43,10 @@ class TimeRotatingLog(TextLog):
 
         record = self.format(elements)
         assert b'\n' not in record
+        record = record + b'\n'
 
         flock(self.f, LOCK_EX)
         self.f.write(record)
-        self.f.write(b'\n')
         self.f.flush()
         flock(self.f, LOCK_UN)
 
