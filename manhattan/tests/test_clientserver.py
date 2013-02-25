@@ -39,11 +39,11 @@ class TestClientServer(BaseTest):
 
         try:
             server.start()
-            self.assertEqual(client.foo(4, u'blah'),
-                             "foo: 4 'blah'")
+            # NOTE: recv_json converts string args to unicode
+            self.assertEqual(client.foo(4, 'blah'), "foo: 4 u'blah'")
             self.assertEqual(
-                client.bar(u'hello', u'world', **dict(a=12, b=u'blah')),
-                "bar: ('hello', 'world') {'a': 12, 'b': 'blah'}")
+                client.bar('hello', 'world', **dict(a=12, b='blah')),
+                "bar: (u'hello', u'world') {u'a': 12, u'b': u'blah'}")
 
             with self.assertRaisesRegexp(ServerError, 'ValueError: sad'):
                 client.failme(42)
