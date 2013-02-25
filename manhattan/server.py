@@ -17,11 +17,12 @@ log = logging.getLogger(__name__)
 
 loop = ioloop.IOLoop.instance()
 ctx = zmq.Context()
+default_bind = 'tcp://127.0.0.1:5555'
 
 
 class Server(Thread):
 
-    def __init__(self, backend, bind='tcp://127.0.0.1:5555'):
+    def __init__(self, backend, bind=default_bind):
         Thread.__init__(self)
         self.backend = backend
         self.bind = bind

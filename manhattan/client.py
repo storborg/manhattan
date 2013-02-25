@@ -2,6 +2,9 @@ import argparse
 import zmq
 import code
 
+from .server import default_bind
+
+
 ctx = zmq.Context()
 
 
@@ -15,7 +18,7 @@ class TimeoutError(Exception):
 
 class Client(object):
 
-    def __init__(self, connect='tcp://127.0.0.1:5555', wait=3000):
+    def __init__(self, connect=default_bind, wait=3000):
         self.sock = ctx.socket(zmq.REQ)
         self.sock.setsockopt(zmq.LINGER, 0)
         self.sock.connect(connect)
@@ -45,7 +48,7 @@ class Client(object):
 def main():
     p = argparse.ArgumentParser(description='Run a Manhattan client.')
     p.add_argument('--connect', type=str,
-                   default='tcp://127.0.0.1:5555',
+                   default=default_bind,
                    help='ZeroMQ socket description to connect to')
     args = p.parse_args()
 
