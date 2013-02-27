@@ -2,7 +2,7 @@ import argparse
 import zmq
 import code
 
-from .server import default_bind
+default_bind = 'tcp://127.0.0.1:5555'
 
 
 ctx = zmq.Context()
