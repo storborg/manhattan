@@ -22,11 +22,10 @@ default_bind = 'tcp://127.0.0.1:5555'
 
 class Server(Thread):
 
-    def __init__(self, backend, bind=default_bind, log=None):
+    def __init__(self, backend, bind=default_bind):
         Thread.__init__(self)
         self.backend = backend
         self.bind = bind
-        self.log = log
 
     def run(self):
         s = ctx.socket(zmq.REP)
@@ -49,11 +48,7 @@ class Server(Thread):
     def handle(self, req):
         log.info('Handling request: %r', req)
         method, args, kwargs = req
-        if method == 'log':
-            self.log.write(args[0])
-            resp = None
-        else:
-            resp = getattr(self.backend, method)(*args, **kwargs)
+        resp = getattr(self.backend, method)(*args, **kwargs)
         log.info('Returning response: %r', resp)
         return resp
 
@@ -173,7 +168,7 @@ def main(killed_event=None):
     mhlog = TimeRotatingLog(input_log_path)
     worker = Worker(mhlog, backend, stats_every=5000)
 
-    server = Server(backend, bind=bind, log=mhlog)
+    server = Server(backend, bind=bind)
     server.start()
 
     try:

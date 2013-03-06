@@ -28,9 +28,13 @@ setup(name="manhattan",
       ],
       license='MIT',
       packages=['manhattan'],
-      entry_points=dict(console_scripts=[
-          'manhattan-server=manhattan.server:main',
-          'manhattan-client=manhattan.client:main']),
+      entry_points=dict(
+          console_scripts=[
+              'manhattan-server=manhattan.server:main',
+              'manhattan-client=manhattan.client:main',
+              'manhattan-log-server=manhattan.log.remote:server',
+          ]
+      ),
       test_suite='nose.collector',
       tests_require=['nose'],
       zip_safe=False)
