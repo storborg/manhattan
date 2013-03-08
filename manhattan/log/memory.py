@@ -13,9 +13,9 @@ class MemoryLog(object):
     def __init__(self):
         self.q = deque()
 
-    def write(self, elements):
-        log.info('Writing record: %r', elements)
-        self.q.append(elements)
+    def write(self, *records):
+        log.info('Writing records: %r', records)
+        self.q.extend(records)
 
     def process(self):
         log.info('Swapping out log.')

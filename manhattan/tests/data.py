@@ -196,3 +196,5 @@ def run_clickstream(log, first=None, last=None):
                    value_format=value_format)
         elif cmd == 'split':
             v.split(unicode(args[0]))
+
+        v.flush()
