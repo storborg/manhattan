@@ -32,7 +32,7 @@ class TimeRotatingLog(TextLog):
         start = ts - (ts % 3600)
         return '%s.%s' % (self.path, start)
 
-    def write(self, elements):
+    def write(self, *records):
         check_log_name = self.log_name_for(time.time())
         if check_log_name != self.current_log_name:
             self.current_log_name = check_log_name
@@ -41,12 +41,14 @@ class TimeRotatingLog(TextLog):
                 self.f.close()
             self.f = open(self.current_log_name, 'ab')
 
-        record = self.format(elements)
-        assert b'\n' not in record
-        record = record + b'\n'
+        data = [self.format(r) for r in records]
+        for r in data:
+            assert b'\n' not in r, '\\n found in %r' % r
+        data.append('')  # to get the final \n
+        data = b'\n'.join(data)
 
         flock(self.f, LOCK_EX)
-        self.f.write(record)
+        self.f.write(data)
         self.f.flush()
         flock(self.f, LOCK_UN)
 

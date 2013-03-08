@@ -29,7 +29,7 @@ class Visitor(object):
     CURRENCY = CURRENCY
     PERCENTAGE = PERCENTAGE
 
-    def __init__(self, id, log, site_id=''):
+    def __init__(self, id, log, site_id='', buffer_writes=True):
         """
         Initialize the Visitor handle.
 
@@ -39,10 +39,16 @@ class Visitor(object):
             str
         :param log:
             A log instance that implements the manhattan log interface methods.
+        :param buffer_writes:
+            If True, log entries are buffered and flushed at the end of
+            a request or when `flush()` is called manually; if False,
+            they're written immediately.
         """
         self.id = id
         self.log = log
         self.site_id = str(site_id)
+        self.buffer_writes = buffer_writes
+        self.buffer = []
 
     def timestamp(self):
         """
@@ -51,8 +57,17 @@ class Visitor(object):
         """
         return '%0.4f' % time.time()
 
-    def write(self, rec):
-        self.log.write(rec.to_list())
+    def write(self, *records):
+        self.buffer += records
+        if not self.buffer_writes:
+            self.flush()
+
+    def flush(self):
+        """Write buffered records to log."""
+        if self.buffer:
+            records = [r.to_list() for r in self.buffer]
+            self.buffer = []
+            self.log.write(*records)
 
     def page(self, request):
         """
