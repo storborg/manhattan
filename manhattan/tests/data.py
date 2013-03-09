@@ -154,7 +154,8 @@ def run_clickstream(log, first=None, last=None):
 
     def get_visitor(vid, site_id):
         if vid not in visitors:
-            visitors[vid] = Visitor(vid, log, site_id=site_id)
+            visitors[vid] = Visitor(
+                vid, log, site_id=site_id, buffer_writes=False)
         return visitors[vid]
 
     def set_fake_timestamp(v, ts):
@@ -196,5 +197,3 @@ def run_clickstream(log, first=None, last=None):
                    value_format=value_format)
         elif cmd == 'split':
             v.split(unicode(args[0]))
-
-        v.flush()
