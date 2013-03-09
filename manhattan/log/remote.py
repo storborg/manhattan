@@ -1,46 +1,61 @@
 import argparse
-from threading import Thread
+import json
 
-import zmq
+import redis
 
 from manhattan.log.timerotating import TimeRotatingLog
 
 
-context = zmq.Context()
+DEFAULT_REDIS_KEY = 'manhattan:log:queue'
+
+
+def make_redis(kwargs, **defaults):
+    if kwargs is None:
+        kwargs = {}
+    for k in defaults:
+        if k not in kwargs:
+            kwargs[k] = defaults[k]
+    return redis.Redis(**kwargs)
 
 
 class RemoteLog(object):
 
     """Sends log entries to a remote server."""
 
-    def __init__(self, connect='tcp://localhost:5556'):
-        self.socket = context.socket(zmq.PUSH)
-        self.socket.connect(connect)
+    def __init__(self, key=DEFAULT_REDIS_KEY, redis_kwargs=None):
+        self.key = key
+        self.db = make_redis(redis_kwargs, socket_timeout=1)
 
-    def write(self, elements):
-        """Send ``elements`` to remote logger."""
-        self.socket.send_json(elements)
+    def write(self, *records):
+        """Send ``records`` to remote logger."""
+        self.db.rpush(self.key, json.dumps(records))
 
 
 class RemoteLogServer(object):
 
-    def __init__(self, log, bind='tcp://*:5556'):
-        self.bind = bind
+    """Consumes log entries from a Redis queue and writes them to a log."""
+
+    def __init__(self, log, key=DEFAULT_REDIS_KEY, redis_kwargs=None):
         self.log = log
+        self.key = key
+        self.db = make_redis(redis_kwargs)
+        self.running = False
 
     def run(self):
-        context = zmq.Context()
-        socket = context.socket(zmq.PULL)
-        socket.bind('tcp://*:5556')
-        while True:
-            log_entry = socket.recv_json()
-            self.log.write(log_entry)
+        self.running = True
+        while self.running:
+            records = self.db.blpop(self.key)[1]
+            records = json.loads(records)
+            self.log.write(*records)
+
+    def stop(self):
+        self.running = False
 
 
 def server(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-b', '--bind', default='tcp://*:5556')
     parser.add_argument('-p', '--path', default='log/manhattan.log')
+    parser.add_argument('-k', '--key', default=DEFAULT_REDIS_KEY)
     args = parser.parse_args(argv) if argv else parser.parse_args()
-    log_server = RemoteLogServer(TimeRotatingLog(args.path), bind=args.bind)
+    log_server = RemoteLogServer(TimeRotatingLog(args.path))
     log_server.run()

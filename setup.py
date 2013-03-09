@@ -18,6 +18,7 @@ setup(name="manhattan",
       install_requires=[
           'sqlalchemy>=0.7',
           'webob',
+          'redis>=2.7.2',
           'pytz',
           'pyzmq',
           # These are for tests.
