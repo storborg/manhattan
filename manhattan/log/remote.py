@@ -9,7 +9,7 @@ from manhattan.log.timerotating import TimeRotatingLog
 DEFAULT_REDIS_KEY = 'manhattan:log:queue'
 
 
-def make_redis(kwargs, **defaults):
+def make_redis(kwargs=None, **defaults):
     if kwargs is None:
         kwargs = {}
     for k in defaults:
