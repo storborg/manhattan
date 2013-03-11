@@ -4,7 +4,7 @@ import time
 from threading import Thread
 from unittest import TestCase
 
-from manhattan.log.remote import RemoteLog, RemoteLogServer
+from manhattan.log.remote import make_redis, server, RemoteLog, RemoteLogServer
 from manhattan.log.timerotating import TimeRotatingLog
 
 
@@ -27,16 +27,9 @@ class TestRemoteLog(TestCase):
     def setUpClass(cls):
         cls.text_log = TimeRotatingLog('/tmp/manhattan-tests/remote.log')
         cls.log = RemoteLog(key=REDIS_KEY)
-        cls.log_server = RemoteLogServer(cls.text_log, key=REDIS_KEY)
-        cls.log_server_thread = ServerThread(cls.log_server)
         for f in cls._get_log_files():
             os.remove(f)
         cls.log.db.delete(REDIS_KEY)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.log_server.stop()
-        cls.log_server.db.rpush(REDIS_KEY, '[]')  # HACK to break server loop
 
     @classmethod
     def _get_log_files(cls):
@@ -50,14 +43,17 @@ class TestRemoteLog(TestCase):
     def test_01_enqueue(self):
         record = ['a', 'b', 'c']
         self.log.write(record)
-        item = self.log.db.blpop(REDIS_KEY)[1]
+        item = self.log.db.lpop(REDIS_KEY)
         stored_record = json.loads(item)[0]
         self.assertEqual(stored_record, record)
+        self.assertEqual(self.log.db.llen(REDIS_KEY), 0)
 
     def test_02_consume(self):
+        log_server = RemoteLogServer(self.text_log, key=REDIS_KEY)
+        log_server_thread = ServerThread(log_server)
         self.log.write(['a', 'b', 'c'])
         self.log.write(['x', 'y', 'z'])
-        self.log_server_thread.start()
+        log_server_thread.start()
         self.log.write(['1', '2', '3'])
         time.sleep(0.5)
         log_file = self._get_log_files()[0]
@@ -65,3 +61,18 @@ class TestRemoteLog(TestCase):
             lines = fp.readlines()
             self.assertEqual(len(lines), 3)
         self.assertEqual(self.log.db.llen(REDIS_KEY), 0)
+        self.log.send_command('STOP')
+
+    def test_server_script(self):
+        """Create and immediately stop server."""
+        self.log.send_command('STOP')
+        server(['--key', REDIS_KEY])
+        self.assertEqual(self.log.db.llen(REDIS_KEY), 0)
+
+    def test_make_redis(self):
+        redis = make_redis({'socket_timeout': 1}, socket_timeout=2)
+        connection = redis.connection_pool.make_connection()
+        self.assertEqual(connection.socket_timeout, 1)
+        redis.rpush(REDIS_KEY, 'a')
+        self.assertEqual(redis.lpop(REDIS_KEY), 'a')
+        self.assertEqual(redis.llen(REDIS_KEY), 0)
