@@ -56,6 +56,6 @@ def server(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path', default='log/manhattan.log')
     parser.add_argument('-k', '--key', default=DEFAULT_REDIS_KEY)
-    args = parser.parse_args(argv) if argv else parser.parse_args()
+    args = parser.parse_args(argv)
     log_server = RemoteLogServer(TimeRotatingLog(args.path))
     log_server.run()
