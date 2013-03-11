@@ -30,6 +30,9 @@ class RemoteLog(object):
         """Send ``records`` to remote logger."""
         self.db.rpush(self.key, json.dumps(records))
 
+    def send_command(self, command):
+        self.db.rpush(self.key, command)
+
 
 class RemoteLogServer(object):
 
@@ -45,8 +48,11 @@ class RemoteLogServer(object):
         self.running = True
         while self.running:
             records = self.db.blpop(self.key)[1]
-            records = json.loads(records)
-            self.log.write(*records)
+            if records == 'STOP':
+                self.stop()
+            else:
+                records = json.loads(records)
+                self.log.write(*records)
 
     def stop(self):
         self.running = False
