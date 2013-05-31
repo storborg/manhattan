@@ -2,7 +2,7 @@ import re
 from unittest import TestCase
 
 from webob import Request, Response
-from webtest import TestApp
+from webtest import TestApp, TestRequest
 
 from manhattan.middleware import ManhattanMiddleware
 from manhattan.record import Record
@@ -153,6 +153,6 @@ class TestMiddleware(TestCase):
         orig_cookie = app.cookies['manhattan']
         # truncate the last 4 chars, which will blow the sig
         bad_cookie = orig_cookie[:-4]
-        app.cookies['manhattan'] = bad_cookie
+        bad_request = TestRequest.blank('/', cookies={'manhattan': bad_cookie})
         with self.assertRaises(BadSignature):
-            app.get('/')
+            app.request(bad_request)
