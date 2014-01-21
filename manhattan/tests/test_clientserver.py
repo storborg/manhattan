@@ -39,7 +39,9 @@ class TestClientServer(BaseTest):
 
         try:
             server.start()
-            # NOTE: recv_json converts string args to unicode
+            # This test is screwy. If simplejson is installed, it will convert
+            # all strings to str objects. Without it, you get unicode objects.
+            # We require simplejson so assume it's gonna be str.
             self.assertEqual(client.foo(4, 'blah'), "foo: 4 'blah'")
             self.assertEqual(
                 client.bar('hello', 'world', **dict(a=12, b='blah')),
