@@ -12,11 +12,14 @@
 *.pyc
 
 # Egg metadata, regenerated from source files by setuptools.
-/manhattan.egg-info
+*.egg-info
+
+# Tox working dir
+.tox/
 
 # Tests coverage temp files.
 .coverage
 /cover
 
-# Rendered sphinx docs.
-docs/_build
+# Rendered documentation.
+docs/_build/
