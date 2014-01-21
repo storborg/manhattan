@@ -1,6 +1,8 @@
 Manhattan - Easy, High Performance Analytics
 ============================================
 
+.. module:: manhattan
+
 Scott Torborg - `Cart Logic <http://www.cartlogic.com>`_
 
 Manhattan is a Python infrastructure block to provide basic server-side
@@ -49,3 +51,10 @@ Contents
     quickstart
     advanced
     contributing
+
+
+License
+-------
+
+Manhattan is licensed under an MIT license. Please see the LICENSE file for
+more information.
