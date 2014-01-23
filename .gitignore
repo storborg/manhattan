@@ -23,3 +23,6 @@
 
 # Rendered documentation.
 docs/_build/
+
+# Build dir
+dist/
