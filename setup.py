@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(name="manhattan",
@@ -24,7 +24,7 @@ setup(name="manhattan",
           'simplejson',
       ],
       license='MIT',
-      packages=['manhattan'],
+      packages=find_packages(),
       entry_points=dict(
           console_scripts=[
               'manhattan-server=manhattan.server:main',
