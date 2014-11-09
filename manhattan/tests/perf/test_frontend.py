@@ -1,8 +1,11 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import zmq
 from time import time
 from webob import Request
+
+from six.moves import range
 
 from manhattan.visitor import Visitor
 from manhattan.util import nonce
@@ -29,7 +32,7 @@ def run_logger(log, num_requests=10000, goal_every=50, split_every=1):
     print("Logging %d requests." % num_requests)
     start = time()
     count = 0
-    for ii in xrange(num_requests):
+    for ii in range(num_requests):
         count += 1
         vis = Visitor(vid, log)
         vis.page(req)

@@ -1,4 +1,5 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import time
 
@@ -19,7 +20,7 @@ def test(f, trials=500):
 
 
 def get_results():
-    client.test_results(u'Discount Rate for Datrek')
+    client.test_results('Discount Rate for Datrek')
 
 
 def get_tests():
