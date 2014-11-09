@@ -99,19 +99,19 @@ class TestCombinations(BaseTest):
         self.assertEqual(backend.all_tests(),
                          [('red checkout form', 1602, 7246)])
 
-        self.assertEqual(backend.results('red checkout form',
-                                         ['viewed page',
-                                          'add to cart',
-                                          'began checkout',
-                                          'completed checkout'],
-                                         site_id=1),
-                         {
-                             u'True': [1, 0, 1, Decimal('0')],
-                             u'False': [3, 0, 3, Decimal('108.19')]
-                         })
+        self.assertEqual(
+            backend.results('red checkout form',
+                            ['viewed page',
+                             'add to cart',
+                             'began checkout',
+                             'completed checkout'],
+                            site_id=1),
+            {
+                u'True': [1, 0, 1, Decimal('0')],
+                u'False': [3, 0, 3, Decimal('108.19')]
+            })
 
     def _get_backend(self, reset=False):
-        #url = 'mysql://manhattan:quux@localhost/manhattan_test'
         url = 'sqlite:////tmp/manhattan-test.db'
         if reset:
             drop_existing_tables(create_engine(url))
