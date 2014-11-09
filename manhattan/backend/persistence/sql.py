@@ -1,19 +1,6 @@
-import warnings
-
 from sqlalchemy import MetaData, Table, Column, types, create_engine, select
 from sqlalchemy.sql import and_
 from sqlalchemy.dialects import mysql
-
-
-# Catch truncated data warnings. These are likely to happen on pickle types
-# with a backend field that is not large enough, and they will break
-# things horribly.
-# XXX Blocking these warnings is not 'being a good citizen' since effects will
-# spread beyond this package.
-#warnings.filterwarnings('error',
-#                        'Data truncated for column',
-#                        Warning,
-#                        'sqlalchemy.engine.default')
 
 
 from ..model import Goal, Test
