@@ -31,7 +31,12 @@ sampleconfig = {
     'error_log_path': work_path('python-config-debug.log'),
 }
 
-
+# fields are:
+#   site_id
+#   timestamp
+#   command (event type)
+#   visitor ID (vid)
+#   args to command
 test_clickstream = [
     (1, 10, 'page', 'a', '/'),
     (1, 10, 'page', 'b', '/cheese'),

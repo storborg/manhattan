@@ -1,6 +1,13 @@
 Manhattan Changelog
 ===================
 
+Version 0.3
+-----------
+
+- Restructure population assignment so that it returns consistent results
+  independent of PYTHONHASHSEED. A side effect of this is that population
+  allocations will change between 0.2 and 0.3: take care not to upgrade while
+  tests are running.
 
 Version 0.2
 -----------

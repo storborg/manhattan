@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(name="manhattan",
-      version='0.2',
+      version='0.3',
       description='Robust Server-Side Analytics',
       long_description='',
       classifiers=[

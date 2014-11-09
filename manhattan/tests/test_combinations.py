@@ -54,7 +54,7 @@ class TestCombinations(BaseTest):
         num = backend.count(u'completed checkout',
                             variant=(u'red checkout form', u'False'),
                             site_id=1)
-        self.assertEqual(num, 3)
+        self.assertEqual(num, 2)
 
         revenue = backend.goal_value(u'completed checkout', site_id=1)
         self.assertEqual(revenue, Decimal('108.19'))
@@ -62,11 +62,11 @@ class TestCombinations(BaseTest):
         revenue_nored = backend.goal_value(
             u'completed checkout',
             variant=(u'red checkout form', u'False'), site_id=1)
-        self.assertEqual(revenue_nored, Decimal('108.19'))
+        self.assertEqual(revenue_nored, Decimal('43.2'))
 
         noreds = backend.count(variant=(u'red checkout form', u'False'),
                                site_id=1)
-        self.assertEqual(noreds, 3)
+        self.assertEqual(noreds, 2)
 
         margin = backend.goal_value(u'order margin', site_id=1)
         margin = margin.quantize(Decimal('.01'))
@@ -80,7 +80,7 @@ class TestCombinations(BaseTest):
             u'margin per session',
             variant=(u'red checkout form', u'False'), site_id=1)
         margin_per_noreds = margin_per_noreds.quantize(Decimal('.01'))
-        self.assertEqual(margin_per_noreds, Decimal('7.79'))
+        self.assertEqual(margin_per_noreds, Decimal('5.16'))
 
         abandoned_carts = backend.count(u'abandoned cart', site_id=1)
         self.assertEqual(abandoned_carts, 1)
@@ -106,10 +106,8 @@ class TestCombinations(BaseTest):
                              'began checkout',
                              'completed checkout'],
                             site_id=1),
-            {
-                u'True': [1, 0, 1, Decimal('0')],
-                u'False': [3, 0, 3, Decimal('108.19')]
-            })
+            {'True': [2, 0, 2, Decimal('64.99')],
+             'False': [2, 0, 2, Decimal('43.2')]})
 
     def _get_backend(self, reset=False):
         url = 'sqlite:////tmp/manhattan-test.db'

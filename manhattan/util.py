@@ -40,6 +40,10 @@ def pixel_tag(path):
             'src="%s" alt="" />' % path)
 
 
+def safe_to_hash(s):
+    return int(binascii.hexlify(s), 16)
+
+
 def nonrandom_choice(seed, seq):
     """
     Pick an element from the specified sequence ``seq`` based on the value of
@@ -57,7 +61,7 @@ def nonrandom_choice(seed, seq):
     :returns:
         An element from ``seq``.
     """
-    return random.Random(seed).choice(seq)
+    return random.Random(safe_to_hash(seed)).choice(seq)
 
 
 def nonrandom(seed, n):
@@ -79,7 +83,7 @@ def nonrandom(seed, n):
     :rtype:
         float
     """
-    return random.Random(seed).random() * n
+    return random.Random(safe_to_hash(seed)).random() * n
 
 
 def choose_population(seed, populations=None):
@@ -114,7 +118,10 @@ def choose_population(seed, populations=None):
         pop_name = []
         pop_mass = []
         running_mass = 0
-        for name, mass in populations.iteritems():
+        # XXX FIXME This should sort population names before picking one, so
+        # that consistent results are returned even when Python has hash
+        # randomization enabled.
+        for name, mass in sorted(populations.items()):
             if mass > 0:
                 pop_name.append(name)
                 pop_mass.append(running_mass)

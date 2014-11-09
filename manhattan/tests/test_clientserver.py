@@ -3,6 +3,7 @@ import os
 import os.path
 import sys
 import time
+from pprint import pformat
 
 from threading import Event, Thread
 
@@ -21,10 +22,10 @@ from .test_combinations import drop_existing_tables
 class MockBackend(object):
 
     def foo(self, a, b):
-        return u"foo: %r %r" % (a, b)
+        return u"foo: %s %s" % (pformat(a), pformat(b))
 
     def bar(self, *args, **kw):
-        return u"bar: %r %r" % (args, kw)
+        return u"bar: %s %s" % (pformat(args), pformat(kw))
 
     def failme(self, a):
         raise ValueError('sad')
