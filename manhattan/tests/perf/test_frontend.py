@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 import zmq
 from time import time
 from webob import Request
@@ -24,7 +26,7 @@ def run_logger(log, num_requests=10000, goal_every=50, split_every=1):
     vid = nonce()
     req = Request.blank('/foo/bar')
 
-    print "Logging %d requests." % num_requests
+    print("Logging %d requests." % num_requests)
     start = time()
     count = 0
     for ii in xrange(num_requests):
@@ -40,15 +42,15 @@ def run_logger(log, num_requests=10000, goal_every=50, split_every=1):
     end = time()
     elapsed = end - start
     throughput = num_requests / elapsed
-    print "Handled %0.2f req / sec" % throughput
+    print("Handled %0.2f req / sec" % throughput)
 
 
 if __name__ == '__main__':
-    print "Testing MemoryLog"
+    print("Testing MemoryLog")
     run_logger(MemoryLog())
-    print "Testing TimeRotatingLog"
+    print("Testing TimeRotatingLog")
     run_logger(TimeRotatingLog('/tmp/manhattan-trl-perftest'))
-    print "Testing ZeroMQLog"
+    print("Testing ZeroMQLog")
     ctx = zmq.Context()
     read_log = ZeroMQLog(ctx, 'r', stay_alive=False)
     write_log = ZeroMQLog(ctx, 'w')

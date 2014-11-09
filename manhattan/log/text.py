@@ -1,3 +1,6 @@
+from __future__ import absolute_import, division, print_function
+
+
 class TextLog(object):
     """
     A log superclass which provides string handling methods, intended for logs

@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 import time
 
 from manhattan.client import Client
@@ -12,8 +14,8 @@ def test(f, trials=500):
         f()
     end = time.time()
     elapsed = end - start
-    print ("Ran %d trials, %0.2f ms each" %
-           (trials, ((1000. * elapsed) / trials)))
+    print("Ran %d trials, %0.2f ms each" %
+          (trials, ((1000. * elapsed) / trials)))
 
 
 def get_results():
@@ -25,7 +27,7 @@ def get_tests():
 
 
 if __name__ == '__main__':
-    print "Testing tests list."
+    print("Testing tests list.")
     test(get_tests)
-    print "Testing resuls page."
+    print("Testing resuls page.")
     test(get_results)

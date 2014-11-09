@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 """
 This module contains some example ``Rollup`` objects, each implementing the
 interface expected by the Manhattan backend for rollup aggregations.

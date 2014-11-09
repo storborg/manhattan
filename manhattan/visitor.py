@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import time
 
 from .util import choose_population, decode_http_header, decode_url

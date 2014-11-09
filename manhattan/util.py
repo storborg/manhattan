@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 """
 Various utility functions used by Manhattan. It is not expected that these will
 be used externally.

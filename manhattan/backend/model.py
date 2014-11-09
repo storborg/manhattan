@@ -1,3 +1,6 @@
+from __future__ import absolute_import, division, print_function
+
+
 class VisitorHistory(object):
     """
     ``VisitorHistory`` objects store fully or partially aggregated state about
