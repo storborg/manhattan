@@ -1,0 +1,18 @@
+language: python
+
+python:
+  - "2.7"
+
+services:
+  - redis-server
+
+install:
+  - "pip install webtest coverage nose-cover3 flake8 --use-mirrors"
+  - "pip install -e . --use-mirrors"
+
+before_script: "flake8 manhattan"
+
+script:  "nosetests"
+
+after_success:
+  - coveralls
