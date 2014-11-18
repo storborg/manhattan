@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 from webob import Request, Response
 
 from .visitor import Visitor
-from .util import nonce, transparent_pixel, pixel_tag, Signer
+from .util import nonce, transparent_pixel, pixel_tag, Signer, SignerError
 
 
 class ManhattanMiddleware(object):
@@ -44,10 +44,16 @@ class ManhattanMiddleware(object):
     def __call__(self, environ, start_response):
         req = Request(environ)
 
+        fresh = vid = None
         if self.cookie_name in req.cookies:
-            vid = self.get_visitor_id(req)
-            fresh = False
-        else:
+            try:
+                vid = self.get_visitor_id(req)
+            except SignerError:
+                pass
+            else:
+                fresh = False
+
+        if not vid:
             vid = nonce()
             fresh = True
 

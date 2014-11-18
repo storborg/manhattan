@@ -8,7 +8,6 @@ from webtest import TestApp, TestRequest
 from manhattan.middleware import ManhattanMiddleware
 from manhattan.record import Record
 from manhattan.log.memory import MemoryLog
-from manhattan.util import BadSignature
 
 
 class SampleApp(object):
@@ -155,5 +154,6 @@ class TestMiddleware(TestCase):
         # truncate the last 4 chars, which will blow the sig
         bad_cookie = orig_cookie[:-4]
         bad_request = TestRequest.blank('/', cookies={'manhattan': bad_cookie})
-        with self.assertRaises(BadSignature):
-            app.request(bad_request)
+        app.request(bad_request)
+        new_cookie = app.cookies['manhattan']
+        self.assertNotEqual(bad_cookie, new_cookie)
