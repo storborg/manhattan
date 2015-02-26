@@ -1,12 +1,23 @@
 from __future__ import absolute_import, division, print_function
+
 import logging
 
 from decimal import Decimal
+import warnings
 
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.exc import SAWarning
 
-import warnings
+from manhattan.worker import Worker
+
+from manhattan.log.memory import MemoryLog
+from manhattan.log.timerotating import TimeRotatingLog
+
+from manhattan.backend import Backend
+
+from . import data
+from .base import BaseTest, work_path
+
 # Filter out pysqlite Decimal loss of precision warning.
 warnings.filterwarnings('ignore',
                         '.*pysqlite does \*not\* support Decimal',
@@ -18,15 +29,6 @@ warnings.filterwarnings('error',
                         SAWarning,
                         'sqlalchemy.engine.default')
 
-from manhattan.worker import Worker
-
-from manhattan.log.memory import MemoryLog
-from manhattan.log.timerotating import TimeRotatingLog
-
-from manhattan.backend import Backend
-
-from . import data
-from .base import BaseTest, work_path
 
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
