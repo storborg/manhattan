@@ -1,6 +1,15 @@
 Manhattan - Robust Server-Side Analytics
 ========================================
 
+.. image:: https://secure.travis-ci.org/storborg/manhattan.png
+    :target: http://travis-ci.org/storborg/manhattan
+.. image:: https://coveralls.io/repos/storborg/manhattan/badge.png?branch=master
+    :target: https://coveralls.io/r/storborg/manhattan
+.. image:: https://pypip.in/v/manhattan/badge.png
+    :target: https://crate.io/packages/manhattan
+.. image:: https://pypip.in/d/manhattan/badge.png
+    :target: https://crate.io/packages/manhattan
+
 Scott Torborg - `Cart Logic <http://www.cartlogic.com>`_
 
 Manhattan is a Python infrastructure block to provide basic server-side
